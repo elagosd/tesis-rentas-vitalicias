@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Datos confidenciales: nunca se publican
+datos_privados/
+privado/
+datos_reales/
+
+# Bases en Excel: solo se publican las ficticias de py/cotizador/ejemplos/
+*.xlsx
+*.xlsm
+*.xls
+!py/cotizador/ejemplos/*.xlsx
+
+# Resultados que se regeneran con py/correr_benchmark.py
+salidas/
+
+# Streamlit: la clave local no se comparte
+.streamlit/secrets.toml
+
+# Historial local del cotizador
+*.sqlite
+*.sqlite3
+*.db
+
+# LaTeX: archivos auxiliares de compilacion
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.xdv
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

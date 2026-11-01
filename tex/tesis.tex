@@ -1,0 +1,54 @@
+\documentclass[12pt,oneside]{report}
+\input{preambulo}
+\input{datos_numericos}
+\input{datos_variables}
+
+% ---------------------------------------------------------------------
+%  COMPILACION PARCIAL  (util en Overleaf, cuyo plan gratuito corta la
+%  compilacion a los 10 segundos; el documento completo tarda mas).
+%
+%  Descomente la linea siguiente y deje solo los capitulos que este
+%  editando. Las referencias cruzadas a los capitulos excluidos siguen
+%  funcionando, porque LaTeX las lee de los ficheros .aux ya generados.
+%
+%  Para la version final, vuelva a comentarla.
+% ---------------------------------------------------------------------
+%\includeonly{cap/04_estructura}
+
+\begin{document}
+\onehalfspacing
+
+\input{cap/00_portada}
+
+\pagenumbering{roman}
+\input{cap/00_resumen}
+\tableofcontents
+\listoffigures
+\listoftables
+% Con un solo listado (apendice de codigo) no se justifica un indice de listados.
+%\lstlistoflistings
+%\addcontentsline{toc}{chapter}{Índice de listados}
+\cleardoublepage
+\pagenumbering{arabic}
+
+\include{cap/01_introduccion}
+\include{cap/02_preliminares}
+\include{cap/03_modelo}
+\include{cap/04_estructura}
+\include{cap/05_metodos}
+\include{cap/06_variables}
+\include{cap/07_retiro}
+\include{cap/08_resultados}
+\include{cap/09_conclusiones}
+
+\appendix
+\include{cap/A_notacion}
+%\include{cap/B_tablas}   % tablas completas: trasladadas al repositorio publico
+\include{cap/C_software}
+%\include{cap/D_codigo}   % listado de codigo: se cita el repositorio de GitHub
+
+\bibliographystyle{plainnat}
+\bibliography{bibliografia}
+\addcontentsline{toc}{chapter}{Bibliografía}
+
+\end{document}

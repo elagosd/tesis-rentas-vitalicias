@@ -1,0 +1,182 @@
+\chapter{Listado de código}
+\label{ap:codigo}
+
+Se reproduce aquí el fragmento de código que constituye la contribución
+computacional central del trabajo: la derivada analítica exacta. El script
+\texttt{py/generar\_extractos\_codigo.py} permite extraerlo del módulo de
+valoración. El listado corresponde a la versión utilizada al generarlo; si el
+código cambia, debe regenerarse y contrastarse con la revisión que produjo los
+resultados del \cref{cap:resultados}. Este procedimiento reduce la
+transcripción manual, sin garantizar por sí solo la sincronización de versiones
+(véase el \cref{ap:software}).
+
+El resto del código --- los \datoNMetodos{} métodos del catálogo y su
+instrumentación, el estimador del orden de convergencia, la construcción del
+problema, el protocolo de comparación y la recursión de retiro programado ---
+forma parte del proyecto. El repositorio indicado es \repositorio; para
+reproducir los resultados se requieren además la revisión del código y las
+entradas de la ejecución, cuya disponibilidad no se deduce del enlace.
+
+\section{La derivada analítica exacta}
+\label{sec:cod-derivada}
+
+Este es el aporte central sobre el motor de valoración: la implementación de las
+dos derivadas laterales de \cref{eq:subdif-der,eq:subdif-izq}, es decir, del
+$B$-subdiferencial del \cref{thm:subdiferencial}. El cálculo reutiliza los
+vectores de valoración y añade máscaras y productos escalares. El oráculo conjunto
+devuelve valor y derivadas en una llamada al motor, evitando las valoraciones
+auxiliares de las diferencias finitas; su costo marginal se mide junto con la
+preparación y las comprobaciones de cada método.
+
+Obsérvese en particular la corrección de la rama de crecimiento en $M=S_0$
+(\cref{prop:continuidad-rama}), sin la cual la derivada en ese punto resulta
+errónea; el factor de $34$ corresponde al ejemplo del \cref{cap:estructura}.
+
+\lstinputlisting[caption={Derivadas laterales exactas de la reserva matemática
+(fragmento de \texttt{core/motor.py}).}, label={lst:derivada}]%
+{codigo/derivada_exacta.py}
+
+% ---------------------------------------------------------------------
+%  Listados trasladados al repositorio público (31-oct-2026). Se conservan
+%  aquí, excluidos de la compilación, por si se quieren reincorporar:
+%  basta con borrar las dos líneas que los encierran (iffalse ... fi).
+% ---------------------------------------------------------------------
+\iffalse
+
+\section{Instrumentación del catálogo}
+
+Todos los métodos comparten la misma instrumentación, sin lo cual la comparación
+no sería justa. Dos decisiones merecen comentario.
+
+La primera es que cada ejecución dispone de memoria propia: repetir una consulta
+ya disponible no implica una nueva llamada al motor, pero la información no se
+hereda de otro método. La contabilidad incluye preparación y derivadas; el oráculo
+conjunto evita duplicar la valoración cuando entrega también las pendientes.
+
+La segunda es que el criterio de parada es \emph{mixto}, en residuo y en paso, por
+las razones discutidas en la \cref{crit:parada}.
+
+\lstinputlisting[caption={Contador de evaluaciones y registro de iterados
+(fragmento de \texttt{core/metodos\_iterativos.py}).}, label={lst:instrumentacion}]%
+{codigo/instrumentacion.py}
+
+\section{Estimación del orden de convergencia}
+
+El estimador clásico de tres términos consecutivos es inservible aquí, por las
+razones expuestas en la \cref{rem:estimacion-orden}. Se implementa en su lugar una
+regresión de mínimos cuadrados sobre la cola útil de la sucesión de errores, junto
+con dos estimadores auxiliares --- la razón lineal y la razón de reducción del ancho
+del intervalo --- que son los descriptores adecuados para los métodos de orden
+uno.\footnote{La razón de reducción del ancho del intervalo tiene además la virtud
+de no requerir el conocimiento de la raíz. Cuando se dispone de cotas de
+pendiente, el residuo proporciona otro certificado de error.}
+
+\lstinputlisting[caption={Estimadores robustos del orden y de la razón de
+convergencia.}, label={lst:orden}]{codigo/estimacion_orden.py}
+
+\section{Métodos con encaje}
+
+\subsection{Bisección}
+
+Se incluye como referencia por su cota geométrica de error
+(\cref{thm:cota-biseccion}), que no exige derivabilidad. Otros métodos con
+encaje también ofrecen garantías bajo sus respectivas condiciones; la no
+suavidad no hace exclusiva la garantía de bisección.
+
+\lstinputlisting[caption={Método de bisección.}, label={lst:biseccion}]%
+{codigo/metodo_biseccion.py}
+
+\subsection{Regula falsi y sus tres correcciones}
+
+Las cuatro variantes comparten una única implementación parametrizada por el
+factor $\gamma$ con que se reduce el valor de $f$ en el extremo estancado. Esto no
+es solo economía de código: hace explícito que Illinois, Pegasus y
+Anderson--Björck difieren \emph{únicamente} en esa elección, que es exactamente lo
+que la \cref{prop:estancamiento} y su discusión sostienen.
+
+\lstinputlisting[caption={Regula falsi con las variantes de Illinois, Pegasus y
+Anderson--Björck.}, label={lst:regula}]{codigo/metodo_regula_falsi.py}
+
+\subsection{ITP}
+
+El método más reciente del catálogo \citep{oliveira2021}, con sus tres etapas de
+interpolación, truncamiento y proyección claramente separadas en el código.
+
+\lstinputlisting[caption={Método ITP (\emph{Interpolate--Truncate--Project}).},
+label={lst:itp}]{codigo/metodo_itp.py}
+
+\section{Métodos abiertos}
+
+\subsection{Secante}
+
+\lstinputlisting[caption={Método de la secante, con acotamiento al rango
+admisible.}, label={lst:secante}]{codigo/metodo_secante.py}
+
+\subsection{Newton: las dos variantes}
+
+El listado contiene las dos implementaciones que el \cref{cap:resultados}
+contrasta: la derivada por diferencias centradas, con valoraciones auxiliares, y
+la derivada exacta obtenida junto con la reserva. Los contadores incluyen las
+llamadas efectivas y la preparación; la comparación de costo y precisión se
+presenta en el \cref{cap:resultados}, sin atribuir un porcentaje fijo al número
+nominal de consultas por iteración.
+
+\lstinputlisting[caption={Newton con diferencias finitas y Newton con derivada
+analítica.}, label={lst:newton}]{codigo/metodo_newton.py}
+
+\section{Métodos para el caso no suave}
+
+El primero dispone de la garantía local del \cref{cor:qi-sun-aplica}; el segundo
+incorpora encaje y bisección periódica para la garantía global del
+\cref{thm:salvaguardado}. Estas propiedades sustentan su análisis sin excluir
+otros métodos que satisfagan sus propias condiciones.
+
+\lstinputlisting[caption={Newton semisuave de Qi--Sun y su variante con
+salvaguarda de encaje.}, label={lst:semisuave}]{codigo/metodo_semisuave.py}
+
+\section{Construcción del problema}
+
+\subsection{Función objetivo y subdiferencial}
+
+Nótese el cambio de convención de signo respecto del motor de producción, que
+define la función objetivo como $\KA-\VP(M)$, decreciente. Aquí se usa
+$f=\VP-\KA$, creciente, que es la convención bajo la cual la teoría de métodos
+para funciones monótonas crecientes se aplica sin cambios de signo.
+
+\lstinputlisting[caption={Construcción de $f$, $\VP'_+$ y $\VP'_-$.},
+label={lst:objetivo}]{codigo/objetivo.py}
+
+\subsection{Capital mínimo y detección numérica de los quiebres}
+
+Las dos funciones que verifican computacionalmente los resultados estructurales
+del \cref{cap:estructura}: el capital mínimo financiable del
+\cref{cor:capital-minimo} y la localización de los puntos de quiebre predichos por
+el \cref{thm:quiebres}.
+
+\lstinputlisting[caption={Verificación numérica de la estructura.},
+label={lst:capital}]{codigo/capital_minimo.py}
+
+\section{Protocolo de comparación}
+
+Aquí queda fijado, en código, el protocolo descrito en el
+\cref{cap:resultados}: mismo intervalo de encaje, mismo punto inicial, mismo
+criterio de parada, misma contabilidad de costo para los \datoNMetodos{}
+métodos. La preparación de parámetros, incluida una consulta de pendiente para
+punto fijo, pertenece a su costo y no se suministra como información gratuita.
+
+\lstinputlisting[caption={Ejecución del catálogo completo sobre un escenario.},
+label={lst:banco}]{codigo/banco_pruebas.py}
+
+\section{Recursión de retiro programado}
+
+El bucle que implementa el sistema dinámico de la \cref{def:sistema-rp}. Se
+reconocen los ajustes de la \cref{sec:operadores}, con techo comercial opcional y
+desactivado por defecto, y la regla de arranque igual a la renta vitalicia. El
+estado incluye la mesada anterior. La parada de la simulación por insuficiencia
+de capital exige distinguir el cierre numérico del derecho pensional.
+
+\lstinputlisting[caption={Bucle principal de la proyección de retiro programado
+(fragmento de \texttt{core/retiro\_programado.py}).}, label={lst:rp}]%
+{codigo/retiro_programado.py}
+
+\fi

@@ -1,0 +1,263 @@
+\chapter{Introducción}
+\label{cap:introduccion}
+
+\section{El problema y su contexto}
+
+En los sistemas pensionales de capitalización individual, la renta vitalicia
+inmediata permite transferir a una compañía de seguros el capital destinado a
+financiar la pensión, a cambio de los pagos que correspondan mientras el afiliado
+o sus beneficiarios conserven el derecho\footnote{El capital disponible puede incluir el saldo de la cuenta de ahorro individual y el bono pensional, cuando sea aplicable. Su comparación con una reserva requiere precisar fecha y base de valoración. La prima única del contrato puede incorporar componentes de tarificación que no coinciden con la reserva modelada.}.
+En Colombia, la modalidad está regulada por la Ley 100 de
+1993\footnote{Congreso de la República de Colombia, \emph{Ley 100 de 1993}, artículos 64 (requisitos para obtener la pensión de vejez), 74 (beneficiarios de la pensión de sobrevivientes), 79 (modalidades de las pensiones), 80 (renta vitalicia inmediata) y 81 (retiro programado). Los artículos 35 y 14 regulan la pensión mínima y el reajuste de las mesadas, respectivamente.} y por la reglamentación de la Superintendencia
+Financiera.
+
+Desde el punto de vista de la aseguradora, el contrato es una obligación de largo
+plazo cuyo valor depende de variables demográficas (supervivencia del grupo
+familiar), financieras (descuento e inflación) y regulatorias (indexación, piso
+pensional y auxilio funerario). En el modelo de este trabajo, la equivalencia entre
+un capital objetivo y el valor presente esperado de las obligaciones incluidas se
+escribe como
+\begin{equation}
+\label{eq:problema-central}
+  f(M) \;=\; \VP(M) - \KA \;=\; 0,\qquad M\ge\SMLV,
+\end{equation}
+donde $\KA>0$ es el capital objetivo, $M$ la mesada inicial y $\VP(M)$ la reserva
+calculada por el cotizador. La igualdad exige bases de valoración homogéneas y no
+identifica por sí sola esa reserva con una prima comercial completa.
+
+La función combina supervivencias tabuladas, indexación, un piso expresado como
+máximo y un auxilio funerario con recortes, sobre un horizonte de
+\datoNMeses{} periodos mensuales. Aunque en cada tramo afín la inversión es
+algebraica, localizar el tramo pertinente y controlar los casos de frontera
+justifican estudiar los métodos numéricos que resuelven la ecuación.
+
+Este trabajo pregunta qué métodos resultan adecuados para este cotizador y bajo
+qué condiciones. La respuesta exige caracterizar primero la estructura de
+$\VP$, y distinguir las propiedades demostradas del desempeño observado en la
+muestra. El alcance se limita al modelo implementado, con las convenciones y
+limitaciones actuariales explicitadas en los \cref{cap:modelo,cap:variables}.
+
+\section{Motivación práctica}
+
+La cotización repetida y la proyección anual del retiro programado requieren
+resolver múltiples problemas de raíz. Cada llamada al motor construye flujos y
+probabilidades y los descuenta sobre el horizonte de valoración; ese trabajo es
+distinto de las operaciones escalares del método iterativo. Comparar solo el
+número de iteraciones puede ocultar diferencias importantes: una derivada por
+diferencias finitas requiere valoraciones adicionales, mientras que el cálculo
+analítico conjunto puede reutilizar los vectores de una misma llamada.
+
+La comparación del \cref{cap:resultados} contabiliza las llamadas efectivas al
+motor, incluida la preparación del escenario, y las complementa con tiempos de
+ejecución. Esa contabilidad permite evaluar el beneficio de la derivada exacta sin
+suponer que su costo marginal sea nulo ni atribuir todo el costo de una cotización
+al bucle del solucionador.
+
+Hay además una razón de exactitud. El residuo se mide en unidades de capital,
+pero el resultado que interesa se expresa en unidades de mesada. Una cota inferior
+positiva de las pendientes relaciona ambos errores; cerca del piso pensional esa
+relación puede ser menos favorable. El \cref{cap:metodos} establece criterios de
+parada que distinguen estas unidades y el \cref{cap:retiro} estudia su propagación
+entre años.
+
+\section{Pertinencia del problema}
+\label{sec:pertinencia}
+
+La contribución académica consiste en analizar una función de valoración concreta
+y relacionar su estructura con la elección y evaluación de métodos conocidos. La
+resolución de una ecuación escalar adquiere aquí interés por la interacción de
+las garantías con la inversión de la reserva, por los casos de capital
+insuficiente y por el acoplamiento temporal del retiro programado.
+
+\paragraph{Estructura de la función.}
+Los modelos clásicos de anualidades sin garantías conducen a una valoración
+lineal en el beneficio \citep{bowers1997,dickson2020,promislow2015}. Los máximos
+y recortes del cotizador estudiado modifican esa estructura. En el
+\cref{cap:estructura} se demuestra que:
+\begin{enumerate}[label=(\roman*),leftmargin=*,nosep]
+  \item la extensión de $\VP$ a $M\ge0$ es constante en $[0,\SMLV]$
+        (\cref{thm:region-plana}); en el dominio admisible $M\ge\SMLV$ no hay
+        solución si $\KA<\VP(\SMLV)$ y hay una única solución si
+        $\KA\ge\VP(\SMLV)$, incluida $M=\SMLV$ en el caso de igualdad;
+  \item el auxilio funerario puede destruir la convexidad bajo las condiciones
+        del \cref{thm:no-convexidad}, por lo que no procede invocar sin
+        comprobación la convergencia monótona de Newton para funciones convexas;
+  \item la función es afín a trozos, con umbrales candidatos caracterizados
+        explícitamente y agrupados en tres racimos geométricos para los
+        parámetros considerados (\cref{thm:quiebres}).
+\end{enumerate}
+En la extensión $M\ge0$, el caso $\KA=\VP(\SMLV)$ sí tiene un intervalo de
+raíces; esa pérdida de inyectividad no debe confundirse con la unicidad en el
+dominio admisible.
+
+\paragraph{Análisis no suave y consecuencias algorítmicas.}
+Las derivadas laterales y los subdiferenciales de Clarke y de Bouligand
+\citep{clarke1983,qi1993} describen los puntos de quiebre. La semisuavidad fuerte
+y la $BD$\nobreakdash-regularidad en una solución interior permiten aplicar la
+teoría local de Newton semisuave \citep{qi1993,facchinei2003}
+(\crefrange{thm:semisuavidad}{thm:bd-regularidad}). La inversión de un tramo con
+su pendiente exacta da la raíz en un paso si su clausura contiene también la
+solución. La garantía global requiere condiciones adicionales, como las de la
+salvaguarda de encaje con bisección periódica; no se deduce de la sola linealidad
+a trozos.
+
+\paragraph{Resultados aplicados verificables.}
+El trabajo presenta la expresión del subdiferencial para este modelo, las
+condiciones de terminación, el sesgo de las diferencias finitas en los quiebres y
+una cota condicional para el estado de retiro programado
+(\cref{sec:aportes}). La novedad se sitúa en su desarrollo e integración para el
+cotizador examinado, y no en la introducción de una teoría general nueva de
+funciones afines a trozos. Los experimentos contrastan implicaciones de esos
+resultados; no sustituyen sus demostraciones ni validan las bases actuariales.
+
+\paragraph{Delimitación.}
+Se estudia una ecuación escalar y una recursión anual con un conjunto explícito de
+convenciones. El instrumental comprende análisis no suave, convergencia de
+métodos iterativos y condiciones para intercambiar esperanza y suma de flujos
+(\cref{thm:tonelli}). Los \datoNMetodos{} métodos comparados son conocidos. El
+aporte central es explicar cómo aprovechar la estructura de este problema y cómo
+medir el trabajo necesario para resolverlo con precisión controlada.
+
+\begin{criticism}[Sobre el alcance]
+Una reserva bien resuelta numéricamente puede seguir apoyándose en tablas o
+parámetros insuficientemente documentados. La derivada exacta y el encaje permiten
+controlar el error del solucionador, mientras que la trazabilidad demográfica,
+la calibración financiera y la conciliación con cotizaciones requieren evidencia
+propia. Esta separación es necesaria para interpretar tanto las mesadas de renta
+vitalicia como las trayectorias ilustrativas de retiro programado.
+\end{criticism}
+
+\section{Estado del arte}
+\label{sec:estado-arte}
+
+La revisión conecta tres frentes.
+
+\paragraph{Valoración actuarial de rentas contingentes.}
+\citet{bowers1997,dickson2020,gerber1997,promislow2015} desarrollan el valor
+presente actuarial y la equivalencia en anualidades sobre una y varias vidas. En
+los modelos clásicos con beneficios proporcionales a $M$, la inversión es lineal.
+El interés de esta aplicación está en conservar explícitos los máximos y recortes
+del cotizador para estudiar su inversión y sus casos de frontera.
+
+\paragraph{Garantías y análisis no suave.}
+Las garantías de productos de seguro introducen opcionalidad
+\citep[cap.~11]{dickson2020}. La teoría convexa y no suave de
+\citet{rockafellar1970,boyd2004,clarke1983} proporciona herramientas para
+analizar las operaciones de máximo, mínimo y suma que intervienen en este modelo.
+La presencia de garantías no determina por sí sola la forma de la función: esta
+depende también de la indexación, los pesos y las demás hipótesis de valoración.
+
+\paragraph{Métodos iterativos y su análisis.}
+Los tratamientos de \citet{burden2016,atkinson1989,stoer2002,quarteroni2007}
+fundamentan los métodos escalares. El catálogo incluye alternativas con encaje de
+\citet{brent1973,ridders1979,dowell1972} e ITP \citep{oliveira2021}. Para el
+caso no suave se emplean \citet{qi1993,facchinei2003}. El índice de eficiencia de
+\citet{ostrowski1966} se interpreta junto con el costo efectivo, y no como un
+sustituto de su medición.
+
+\paragraph{La contribución en esta intersección.}
+El trabajo combina estas herramientas para caracterizar el cotizador estudiado,
+construir sus derivadas laterales e instrumentar una comparación de métodos.
+La revisión presentada delimita ese aporte aplicado; no acredita ausencia de
+trabajos similares en toda la literatura ni prioridad universal.
+
+\section{Pregunta de investigación, objetivos e hipótesis}
+
+\subsection*{Pregunta de investigación}
+\begin{quote}
+\textbf{¿Qué propiedades estructurales de la función de valoración del cotizador
+estudiado determinan la elección de métodos iterativos, y cómo se comparan estos
+en precisión, robustez y costo sobre los escenarios examinados?}
+\end{quote}
+
+La caracterización analítica sustenta la comparación: un resultado experimental
+favorable debe interpretarse junto con las condiciones que permiten o impiden
+generalizarlo.
+
+\subsection*{Objetivo general}
+Caracterizar la estructura analítica de la función de valoración del modelo
+estudiado y evaluar, sobre esa base, métodos iterativos para resolver la ecuación
+de cotización con precisión, robustez y costo documentados.
+
+\subsection*{Objetivos específicos}
+\begin{enumerate}[leftmargin=*]
+  \item Formular la cotización como problema de raíz y establecer condiciones de
+        existencia y unicidad en su dominio admisible. (\cref{cap:estructura})
+  \item Caracterizar los umbrales candidatos y las propiedades de monotonía,
+        convexidad, semisuavidad y condicionamiento. (\cref{cap:estructura})
+  \item Obtener una expresión del subdiferencial e interpretarla actuarialmente.
+        (\cref{cap:estructura})
+  \item Implementar y analizar \datoNMetodos{} métodos de encaje, abiertos y no
+        suaves, distinguiendo garantías locales y globales. (\cref{cap:metodos})
+  \item Revisar el fundamento y la sensibilidad de las variables demográficas,
+        financieras y regulatorias. (\cref{cap:variables})
+  \item Extender la formulación al retiro programado y analizar la propagación del
+        error en su estado acoplado. (\cref{cap:retiro})
+  \item Comparar los métodos sobre escenarios sintéticos y muestras de pólizas,
+        documentando preparación, evaluaciones y precisión. (\cref{cap:resultados})
+\end{enumerate}
+
+\subsection*{Hipótesis de trabajo}
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[H1] La valoración es afín a trozos en la mesada inicial, con un conjunto
+        finito y explícitamente caracterizable de umbrales candidatos.
+  \item[H2] La presencia de intervalos afines permite terminar en un paso cuando
+        el punto de evaluación y la raíz pertenecen a la clausura del tramo cuya
+        pendiente se selecciona.
+  \item[H3] El número de iteraciones es insuficiente para comparar el costo; es
+        necesario contar las llamadas efectivas al motor y medir el tiempo.
+  \item[H4] La derivada analítica conjunta permite evitar las valoraciones
+        auxiliares de las diferencias finitas; su beneficio efectivo depende de
+        la instrumentación y de los escenarios de prueba.
+\end{description}
+
+H1 y H2 se estudian analíticamente; H3 y H4 se contrastan mediante la contabilidad
+y las mediciones del \cref{cap:resultados}.
+
+\section{Aportes del trabajo}
+\label{sec:aportes}
+
+\begin{aporte}
+\textbf{Teóricos y de modelación.}
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Región plana de la extensión y condición de capital mínimo en el dominio
+        admisible (\cref{thm:region-plana,cor:capital-minimo}).
+  \item Umbrales candidatos en tres racimos y condiciones de pérdida de convexidad
+        (\cref{thm:quiebres,thm:no-convexidad}).
+  \item Expresión del $B$-subdiferencial, interpretación marginal, semisuavidad y
+        $BD$-regularidad interior
+        (\cref{thm:subdiferencial,thm:semisuavidad,thm:bd-regularidad}).
+  \item Condiciones de terminación de Newton y garantía de encaje para la variante
+        salvaguardada (\cref{thm:terminacion-finita,thm:salvaguardado}).
+  \item Sesgo de las diferencias finitas en quiebres y cota condicional del error
+        en el estado de retiro programado
+        (\cref{prop:sesgo-diferencias,thm:propagacion}).
+\end{enumerate}
+
+\textbf{Metodológicos y computacionales.}
+\begin{enumerate}[leftmargin=*,nosep,resume]
+  \item Implementación de \datoNMetodos{} métodos con interfaz común y
+        contabilidad de llamadas completas al motor, memoria por ejecución y
+        descripción de las trayectorias de error sin atribuir orden asintótico
+        a una regresión de pocas iteraciones.
+  \item Evaluación conjunta de reserva y derivadas laterales en el motor.
+  \item Protocolo con raíces de referencia y escenarios que incluyen quiebres,
+        regiones afines y capital insuficiente.
+  \item Hallazgos y recomendaciones sobre la implementación
+        (\cref{sec:hallazgos-codigo}).
+  \item Aplicación interactiva para explorar el modelo y sus resultados.
+\end{enumerate}
+\end{aporte}
+
+\section{Estructura del documento}
+
+El \cref{cap:preliminares} reúne los preliminares de probabilidad, análisis no
+suave y convergencia. El \cref{cap:modelo} formula el modelo y delimita las
+convenciones del cotizador. El \cref{cap:estructura} desarrolla el análisis
+estructural y el \cref{cap:metodos} los métodos y sus garantías. El
+\cref{cap:variables} revisa las variables; el \cref{cap:retiro} estudia la
+recursión de retiro programado. El \cref{cap:resultados} presenta los experimentos
+y el \cref{cap:conclusiones} sus implicaciones y límites. Los apéndices recogen la
+notación y el software. El proyecto identifica como repositorio del trabajo
+\repositorio; la reproducción requiere la versión del código y los datos
+asociados a cada ejecución.

@@ -1,0 +1,87 @@
+\begin{longtable}{@{}llrrrrr@{}}
+\toprule
+\textbf{Conjunto} & \textbf{Método} & \textbf{Éxito} & \textbf{Ev.} & \textbf{Iter.} & \textbf{ms} & \textbf{Error mediano} \\
+\midrule
+\endhead
+Pólizas RV & Newton semisuave & 100\% & 2{,}78 & 1{,}78 & 14{,}2 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Punto fijo relajado & 100\% & 2{,}78 & 1{,}78 & 14{,}3 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Newton (analítico) & 100\% & 2{,}78 & 1{,}78 & 14{,}7 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Steffensen & 0\% & 3{,}00 & 1{,}00 & 16{,}0 & $1{,}4\cdot10^{6}$ \\
+Pólizas RV & Aitken--Steffensen & 100\% & 4{,}22 & 1{,}78 & 21{,}1 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Steffensen escalado & 100\% & 4{,}56 & 1{,}78 & 25{,}1 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Newton salvaguardado & 100\% & 4{,}78 & 1{,}78 & 25{,}1 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Anderson--Björck & 100\% & 4{,}78 & 2{,}78 & 26{,}3 & $2{,}9\cdot10^{-6}$ \\
+Pólizas RV & Pegasus & 100\% & 4{,}78 & 2{,}78 & 25{,}1 & $4{,}6\cdot10^{-6}$ \\
+Pólizas RV & Secante & 100\% & 4{,}78 & 3{,}78 & 23{,}6 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Brent & 100\% & 5{,}00 & 3{,}00 & 25{,}0 & $0$ \\
+Pólizas RV & Regula falsi & 100\% & 5{,}33 & 3{,}33 & 26{,}3 & $3{,}7\cdot10^{-6}$ \\
+Pólizas RV & Illinois & 100\% & 5{,}56 & 3{,}56 & 29{,}0 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Müller & 100\% & 5{,}78 & 4{,}78 & 31{,}3 & $8{,}4\cdot10^{-6}$ \\
+Pólizas RV & Newton (dif.\ finitas) & 100\% & 7{,}00 & 2{,}00 & 35{,}7 & $3{,}6\cdot10^{-6}$ \\
+Pólizas RV & Ridders & 100\% & 9{,}11 & 3{,}56 & 53{,}2 & $4{,}7\cdot10^{-10}$ \\
+Pólizas RV & Halley & 100\% & 10{,}44 & 3{,}22 & 51{,}9 & $4{,}9\cdot10^{-5}$ \\
+Pólizas RV & ITP & 100\% & 29{,}56 & 27{,}56 & 148{,}1 & $1{,}6\cdot10^{-3}$ \\
+Pólizas RV & Bisección & 100\% & 32{,}67 & 30{,}67 & 162{,}8 & $1{,}6\cdot10^{-3}$ \\
+\midrule
+Registros adicionales & Newton semisuave & 100\% & 2{,}71 & 1{,}71 & 14{,}5 & $9{,}3\cdot10^{-10}$ \\
+Registros adicionales & Punto fijo relajado & 100\% & 2{,}71 & 1{,}71 & 13{,}9 & $9{,}3\cdot10^{-10}$ \\
+Registros adicionales & Newton (analítico) & 100\% & 2{,}71 & 1{,}71 & 14{,}6 & $9{,}3\cdot10^{-10}$ \\
+Registros adicionales & Steffensen & 0\% & 3{,}00 & 1{,}00 & 15{,}2 & $1{,}9\cdot10^{6}$ \\
+Registros adicionales & Aitken--Steffensen & 100\% & 4{,}00 & 1{,}71 & 20{,}8 & $9{,}3\cdot10^{-10}$ \\
+Registros adicionales & Steffensen escalado & 100\% & 4{,}43 & 1{,}71 & 23{,}1 & $1{,}4\cdot10^{-9}$ \\
+Registros adicionales & Newton salvaguardado & 100\% & 4{,}71 & 1{,}71 & 25{,}5 & $9{,}3\cdot10^{-10}$ \\
+Registros adicionales & Anderson--Björck & 100\% & 4{,}71 & 2{,}71 & 25{,}7 & $4{,}7\cdot10^{-6}$ \\
+Registros adicionales & Pegasus & 100\% & 4{,}71 & 2{,}71 & 26{,}3 & $6{,}6\cdot10^{-6}$ \\
+Registros adicionales & Secante & 100\% & 4{,}71 & 3{,}71 & 27{,}1 & $4{,}7\cdot10^{-10}$ \\
+Registros adicionales & Brent & 100\% & 5{,}00 & 3{,}00 & 25{,}5 & $0$ \\
+Registros adicionales & Illinois & 100\% & 5{,}43 & 3{,}43 & 27{,}2 & $4{,}7\cdot10^{-10}$ \\
+Registros adicionales & Regula falsi & 100\% & 5{,}43 & 3{,}43 & 29{,}0 & $1{,}9\cdot10^{-6}$ \\
+Registros adicionales & Müller & 100\% & 5{,}71 & 4{,}71 & 30{,}7 & $1{,}3\cdot10^{-5}$ \\
+Registros adicionales & Newton (dif.\ finitas) & 100\% & 6{,}57 & 1{,}86 & 36{,}4 & $3{,}8\cdot10^{-6}$ \\
+Registros adicionales & Ridders & 100\% & 8{,}86 & 3{,}43 & 47{,}3 & $4{,}7\cdot10^{-10}$ \\
+Registros adicionales & Halley & 100\% & 9{,}57 & 2{,}86 & 53{,}3 & $4{,}3\cdot10^{-5}$ \\
+Registros adicionales & ITP & 100\% & 29{,}71 & 27{,}71 & 166{,}6 & $6{,}0\cdot10^{-4}$ \\
+Registros adicionales & Bisección & 100\% & 34{,}00 & 32{,}00 & 178{,}2 & $1{,}7\cdot10^{-3}$ \\
+\midrule
+Sintéticos & Steffensen & 0\% & 3{,}00 & 1{,}00 & 17{,}7 & $2{,}5\cdot10^{6}$ \\
+Sintéticos & Newton semisuave & 100\% & 3{,}67 & 2{,}67 & 20{,}2 & $0$ \\
+Sintéticos & Newton (analítico) & 100\% & 3{,}67 & 2{,}67 & 22{,}2 & $0$ \\
+Sintéticos & Aitken--Steffensen & 100\% & 4{,}67 & 2{,}00 & 25{,}8 & $0$ \\
+Sintéticos & Punto fijo relajado & 100\% & 4{,}78 & 3{,}78 & 25{,}8 & $3{,}8\cdot10^{-6}$ \\
+Sintéticos & Pegasus & 100\% & 5{,}67 & 3{,}67 & 30{,}7 & $3{,}6\cdot10^{-5}$ \\
+Sintéticos & Secante & 100\% & 5{,}67 & 4{,}67 & 31{,}4 & $9{,}3\cdot10^{-10}$ \\
+Sintéticos & Anderson--Björck & 100\% & 5{,}67 & 3{,}67 & 30{,}5 & $3{,}2\cdot10^{-5}$ \\
+Sintéticos & Brent & 100\% & 5{,}78 & 3{,}78 & 30{,}8 & $2{,}4\cdot10^{-7}$ \\
+Sintéticos & Illinois & 100\% & 6{,}33 & 4{,}33 & 34{,}1 & $2{,}3\cdot10^{-10}$ \\
+Sintéticos & Regula falsi & 100\% & 6{,}56 & 4{,}56 & 35{,}3 & $3{,}2\cdot10^{-4}$ \\
+Sintéticos & Steffensen escalado & 100\% & 6{,}56 & 2{,}78 & 35{,}4 & $4{,}7\cdot10^{-10}$ \\
+Sintéticos & Müller & 100\% & 6{,}67 & 5{,}67 & 37{,}1 & $1{,}0\cdot10^{-5}$ \\
+Sintéticos & Newton salvaguardado & 100\% & 6{,}89 & 3{,}89 & 38{,}0 & $0$ \\
+Sintéticos & Newton (dif.\ finitas) & 100\% & 9{,}00 & 2{,}67 & 54{,}6 & $2{,}2\cdot10^{-8}$ \\
+Sintéticos & Halley & 100\% & 10{,}33 & 3{,}11 & 55{,}8 & $9{,}3\cdot10^{-10}$ \\
+Sintéticos & Ridders & 100\% & 11{,}33 & 4{,}67 & 59{,}7 & $4{,}2\cdot10^{-6}$ \\
+Sintéticos & ITP & 100\% & 29{,}67 & 27{,}67 & 164{,}3 & $1{,}4\cdot10^{-3}$ \\
+Sintéticos & Bisección & 100\% & 33{,}67 & 31{,}67 & 199{,}4 & $1{,}4\cdot10^{-3}$ \\
+\midrule
+Sint.\ tol.\ fina & Steffensen & 0\% & 3{,}00 & 1{,}00 & 17{,}2 & $2{,}5\cdot10^{6}$ \\
+Sint.\ tol.\ fina & Newton semisuave & 100\% & 3{,}67 & 2{,}67 & 22{,}0 & $0$ \\
+Sint.\ tol.\ fina & Newton (analítico) & 100\% & 3{,}67 & 2{,}67 & 23{,}2 & $0$ \\
+Sint.\ tol.\ fina & Aitken--Steffensen & 100\% & 4{,}67 & 2{,}00 & 26{,}8 & $0$ \\
+Sint.\ tol.\ fina & Secante & 100\% & 6{,}00 & 5{,}00 & 33{,}7 & $9{,}3\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Brent & 100\% & 6{,}44 & 4{,}44 & 38{,}7 & $0$ \\
+Sint.\ tol.\ fina & Steffensen escalado & 100\% & 6{,}56 & 2{,}78 & 38{,}8 & $4{,}7\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Anderson--Björck & 100\% & 6{,}67 & 4{,}67 & 39{,}9 & $9{,}3\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Pegasus & 100\% & 6{,}67 & 4{,}67 & 37{,}6 & $4{,}7\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Punto fijo relajado & 100\% & 6{,}78 & 5{,}78 & 37{,}5 & $9{,}3\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Illinois & 100\% & 6{,}78 & 4{,}78 & 39{,}1 & $0$ \\
+Sint.\ tol.\ fina & Newton salvaguardado & 100\% & 6{,}89 & 3{,}89 & 44{,}2 & $0$ \\
+Sint.\ tol.\ fina & Müller & 100\% & 7{,}67 & 6{,}67 & 44{,}5 & $9{,}3\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Regula falsi & 100\% & 8{,}78 & 6{,}78 & 49{,}3 & $1{,}9\cdot10^{-9}$ \\
+Sint.\ tol.\ fina & Newton (dif.\ finitas) & 100\% & 10{,}67 & 3{,}22 & 64{,}4 & $4{,}7\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Halley & 100\% & 11{,}33 & 3{,}44 & 70{,}0 & $0$ \\
+Sint.\ tol.\ fina & Ridders & 100\% & 14{,}00 & 6{,}00 & 77{,}0 & $9{,}3\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & ITP & 100\% & 32{,}67 & 30{,}67 & 192{,}9 & $9{,}3\cdot10^{-10}$ \\
+Sint.\ tol.\ fina & Bisección & 100\% & 51{,}22 & 49{,}22 & 328{,}3 & $9{,}3\cdot10^{-10}$ \\
+\midrule
+\bottomrule
+\end{longtable}

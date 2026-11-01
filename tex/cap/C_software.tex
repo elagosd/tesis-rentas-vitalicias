@@ -1,0 +1,161 @@
+\chapter{Implementación y reproducibilidad}
+\label{ap:software}
+
+\section{Código}
+
+Toda la implementación es en Python 3, con \texttt{numpy}, \texttt{pandas},
+\texttt{matplotlib} y \texttt{streamlit}. El código completo --- el motor
+actuarial con las derivadas exactas, los \datoNMetodos{} métodos iterativos con su
+instrumentación, el banco de pruebas, los generadores de cifras, tablas y figuras,
+y la aplicación interactiva de la defensa --- forma parte de los archivos del
+proyecto. Este identifica como repositorio del trabajo:
+\begin{center}
+\repositorio
+\end{center}
+La reproducción requiere la versión del código, los datos y la configuración
+asociados a cada ejecución, junto con las dependencias del entorno. El enlace por
+sí solo no identifica esa revisión ni acredita la disponibilidad pública de todas
+las entradas y salidas. El registro de una ejecución debe conservar su fecha y la
+revisión o las sumas de comprobación de los archivos utilizados.
+
+% ---------------------------------------------------------------------
+%  Detalle de modulos: trasladado al README del repositorio (31-oct-2026).
+%  Para reincorporarlo, borrar las dos lineas que lo encierran (iffalse ... fi).
+% ---------------------------------------------------------------------
+\iffalse
+\section{Arquitectura}
+
+Toda la implementación es en Python 3, con \texttt{numpy} para el cálculo
+vectorizado, \texttt{pandas} para el manejo de las bases de pólizas,
+\texttt{matplotlib} para las figuras y \texttt{streamlit} para la aplicación
+interactiva. El proyecto identifica el repositorio \repositorio; los módulos de
+la implementación se organizan como sigue.
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{4.6cm}p{9.6cm}@{}}
+\toprule
+\textbf{Módulo} & \textbf{Contenido} \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Motor actuarial (preexistente, extendido en este trabajo)}}\\
+\texttt{core/config.py} & parámetros actuariales y constantes normativas \\
+\texttt{core/mortalidad.py} & series de mortalidad, mensualización y factores de mejora; fuentes por conciliar \\
+\texttt{core/motor.py} & función de valoración $\VP$; \textbf{derivadas laterales exactas} (aporte de este trabajo) \\
+\texttt{core/smith\_wilson.py} & extrapolación de la curva de descuento \\
+\texttt{core/retiro\_programado.py} & recursión de retiro programado y operadores de ajuste \\
+\texttt{core/base\_masiva.py} & carga y procesamiento de bases de pólizas \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Aporte de esta tesis}}\\
+\texttt{core/metodos\_iterativos.py} & los \datoNMetodos{} métodos con interfaz común e instrumentación \\
+\texttt{core/problema\_tesis.py} & construcción de $f$, $\dB f$ y de los escenarios \\
+\texttt{core/banco\_pruebas.py} & ejecución del catálogo y agregación de resultados \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Generación del documento}}\\
+\texttt{correr\_benchmark.py} & ejecuta el banco de pruebas completo \\
+\texttt{fig\_01..05\_*.py} & genera las figuras en PDF vectorial \\
+\texttt{generar\_macros\_tex.py} & genera \texttt{datos\_numericos.tex} \\
+\texttt{generar\_tablas\_tex.py} & genera las tablas de resultados en \LaTeX \\
+\texttt{generar\_extractos\_codigo.py} & extrae los listados del código fuente \\
+\texttt{insertar\_notas.py} & inserta las notas al pie verificando cada ancla \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Aplicación interactiva}}\\
+\texttt{app/} & presentación de la defensa en Streamlit \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\fi
+
+\section{Sobre la trazabilidad de las cifras}
+
+Los scripts
+\texttt{generar\_macros\_tex.py} y \texttt{generar\_tablas\_tex.py} producen,
+respectivamente, un fichero de macros \LaTeX{} y los cuerpos de las tablas, ambos a
+partir de los resultados del banco de pruebas. El texto utiliza esas macros para
+las magnitudes cubiertas por los generadores. Este mecanismo reduce la
+transcripción manual, pero requiere volver a ejecutar el banco y los generadores
+cuando cambian las entradas o el código. Las figuras, los listados y las
+afirmaciones narrativas deben contrastarse también con esas salidas: la generación
+no garantiza por sí sola la coherencia del documento. Las notas al pie y sus
+anclas requieren revisión de contenido aunque se inserten mediante un script.
+
+La contabilidad distingue la preparación y el bucle iterativo, y registra las
+llamadas efectivas al motor. Cada ejecución de un método dispone de su propia
+memoria de evaluaciones. Cuando se solicita una derivada analítica, un oráculo
+conjunto obtiene reserva y derivadas en una misma llamada; las diferencias finitas
+conservan el costo de sus valoraciones auxiliares. El tiempo medido complementa
+estos contadores y depende del entorno de ejecución.
+
+\section{Los tres componentes de la derivada exacta}
+
+La contribución algorítmica principal se concentra en una extensión de
+\texttt{core/motor.py}. Al invocar \texttt{calcular\_reserva} con
+\texttt{calcular\_derivada=True}, la función devuelve además las dos derivadas
+laterales de \cref{eq:subdif-der,eq:subdif-izq}. El cálculo reutiliza los vectores
+construidos para evaluar $\VP$ y añade máscaras y productos escalares. Evita las
+valoraciones auxiliares necesarias para estimar la pendiente por diferencias
+finitas, pero tiene un costo marginal que debe medirse. Una llamada conjunta no
+significa que la derivada sea gratuita ni que todo un método cueste una única
+valoración por iteración, pues también hay preparación y comprobaciones.
+
+Los tres ingredientes son:
+\begin{enumerate}[leftmargin=*,nosep]
+  \item la máscara de actividad del piso, $a_tM\gtrless b_t$, con desigualdad
+        estricta o no según el lado;
+  \item la máscara de banda del auxilio funerario,
+        $5b_t\lessgtr a_tM\lessgtr10b_t$;
+  \item la corrección de la rama de crecimiento en $M=S_0$
+        (\cref{prop:continuidad-rama}), sin la cual la derivada en ese punto es
+        incorrecta; el factor $34$ corresponde al ejemplo numérico del \cref{cap:estructura}. La corrección afecta a los métodos que consultan
+        la derivada en ese punto; bisección y secante no la necesitan.
+\end{enumerate}
+
+% Comandos de reproduccion: trasladados al README del repositorio.
+\iffalse
+\section{Reproducción de los resultados}
+
+\begin{verbatim}
+# 1. Dependencias
+pip install numpy pandas matplotlib openpyxl scipy streamlit plotly
+
+# 2. Banco de pruebas completo
+cd py && python3 correr_benchmark.py
+
+# 3. Figuras
+python3 fig_01_estructura.py
+python3 fig_02_convergencia.py
+python3 fig_03_actuarial.py
+python3 fig_04_rp_sensibilidad.py
+python3 fig_05_variables.py
+
+# 4. Cifras, tablas y listados del documento
+python3 generar_macros_tex.py
+python3 generar_tablas_tex.py
+python3 generar_extractos_codigo.py
+
+# 5. Compilación
+cd ../tex && latexmk -pdf tesis.tex
+
+# 6. Aplicación interactiva de la defensa
+cd ../app && streamlit run presentacion.py
+\end{verbatim}
+
+\fi
+
+\section{Semillas y reproducibilidad}
+
+La simulación del rendimiento de la cuenta individual admite una semilla
+explícita. Cuando no se proporciona, la implementación deriva un entero de un
+resumen SHA--256 de entradas serializadas en JSON, con orden y formato fijos.
+Esta construcción evita la variación entre procesos del resumen interno de
+Python. No garantiza semillas distintas para todas las entradas posibles ni
+demuestra que asignar trayectorias diferentes a distintas pólizas sea una
+representación adecuada del riesgo de mercado.
+
+Reproducir una trayectoria requiere conservar semilla, generador, entradas,
+configuración y versiones de las dependencias; las diferencias de entorno pueden
+afectar los tiempos y el redondeo. Para comparar variantes de una póliza se debe
+fijar una misma semilla o una misma trayectoria de rendimientos, pues una semilla
+derivada de entradas que cambian puede introducir simultáneamente una nueva
+realización de mercado. La reproducibilidad computacional no acredita la
+calibración del proceso estocástico.

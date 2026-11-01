@@ -1,0 +1,108 @@
+\chapter{Notación}
+\label{ap:notacion}
+
+\section*{Símbolos actuariales}
+
+\begin{longtable}{@{}p{.29\textwidth}p{.66\textwidth}@{}}
+\toprule
+\textbf{Símbolo} & \textbf{Significado} \\
+\midrule
+\endhead
+$T_x$ & tiempo futuro de vida de un individuo de edad $x$ \\
+$\npx{t}{x}$, $S_x(t)$ & probabilidad de que sobreviva al menos $t$ periodos \\
+$\nqx{t}{x}$ & probabilidad complementaria de fallecimiento \\
+$q_x$ & probabilidad anual de fallecimiento entre $x$ y $x+1$ \\
+$\mu_{x+t}$ & fuerza de mortalidad (intensidad instantánea) \\
+$Y$ & grupo asegurado (causante y beneficiarios) \\
+$D_y$, $H_y=\min\{T_y,D_y\}$ & vencimiento del derecho y tiempo efectivo con derecho \\
+$T_Y=\max_{y\in Y}H_y$ & terminación del amparo de último sobreviviente con derecho \\
+$p_y^{\mathrm{der}}(t)$ & probabilidad de supervivencia con derecho, $\Prob(H_y>t)$ \\
+$\CONAB(t)$ & factor de contingencia del amparo básico, $\Prob(T_Y>t)$ \\
+$\DURA_y$ & duración del derecho del beneficiario $y$, en meses \\
+$\alpha_y$ & factor de aplicabilidad (ajuste de mortalidad del cotizador) \\
+$r_x$ & factor anual de mejora de longevidad \\
+\midrule
+$\KA$ & capital acumulado disponible para la ecuación de valoración \\
+$\KA_{\min}=\VP(S_0)$ & capital mínimo financiable \\
+$M$ & mesada pensional inicial (incógnita del problema) \\
+$M^*$ & solución del problema de cotización \\
+$M_t(M)$ & mesada efectiva del mes $t$ generada por $M$ \\
+$\kappa_t$ & número de pagos del mes calendario de $t$ \\
+$S_0$, $S_t$ & salario mínimo vigente y su proyección al mes $t$ \\
+$\AUF$ & valor presente actuarial del auxilio funerario \\
+$\RAB$ & valor presente actuarial del amparo básico \\
+$\VP(M)$ & función de valoración del motor; su relación con prima y reserva requiere conciliación \\
+$\CAI$ & cuenta de ahorro individual (retiro programado) \\
+\midrule
+$i$, $i_t$ & tasa de interés técnico real, plana o de la curva \\
+$\iota_t$ & tasa forward anual real del periodo $t$ \\
+$j_t$ & tasa nominal mensual del periodo $t$ \\
+$v_t$ & factor de descuento acumulado hasta $t$ \\
+$\pi_1,\pi_2,\pi_\infty$ & inflación del primer año, del segundo y de largo plazo \\
+$\delta$ & deslizamiento del salario mínimo sobre la inflación \\
+$\Phi_n(\delta)$ & factor de indexación acumulado a $n$ años \\
+$\delta_{\mathrm{RP}}$ & deslizamiento de RP elegido con la mesada reportada original \\
+$\Phi_j^{\mathrm{RP}}$ & factor $\Phi_j(\delta_{\mathrm{RP}})$, con índice cero en la valoración \\
+$S_0^{(n)}$ & mínimo proyectado en RP, $S_0\Phi_{n-1}^{\mathrm{RP}}$ \\
+$r_n^{\mathrm{RP}}$ & factor incremental de RP, $\Phi_{n-1}^{\mathrm{RP}}/\Phi_{n-2}^{\mathrm{RP}}$ para $n\ge2$ \\
+$\tau_t$, $\phi_t$ & factor de la mesada y del salario mínimo en el mes $t$ \\
+$\gamma$ & porcentaje de reserva por cambio de grupo \\
+$g$ & porcentaje de recargo por gastos \\
+$g_n$ & rendimiento de la cuenta individual en el año $n$ \\
+$C_n$, $\widehat M_n$, $M_n$ & saldo inicial del año, mesada bruta de valoración y mesada pagada en RP \\
+\bottomrule
+\end{longtable}
+
+\section*{Símbolos del análisis}
+
+\begin{longtable}{@{}p{.29\textwidth}p{.66\textwidth}@{}}
+\toprule
+\textbf{Símbolo} & \textbf{Significado} \\
+\midrule
+\endhead
+$f(M)=\VP(M)-\KA$ & función objetivo del problema de raíz \\
+$w_t,\,c_t,\,a_t,\,b_t$ & coeficientes de la forma canónica \cref{eq:canonica} \\
+$N=\datoNMeses$ & número de periodos mensuales proyectados \\
+$\nu_t$ & indicador de vigencia general de la póliza \\
+$\mathcal{B}$ & conjunto candidato que contiene los quiebres de $\VP$ \\
+$\rho_n=\phi_n/\tau_n$ & posición relativa del quiebre del año $n$ \\
+$\rho$ & razón geométrica de los racimos \\
+$n_{\max}=\datoNAniosMax$ & cota del índice anual de los términos proyectados \\
+$\med(a,u,b)$ & operador de recorte, $\min(\max(u,a),b)$ \\
+$\dB f(u)$ & $B$-subdiferencial de Qi \\
+$\dC f(u)$ & subdiferencial de Clarke \\
+$\VP'_+$, $\VP'_-$ & derivadas laterales derecha e izquierda \\
+$L$ & constante de Lipschitz de $\VP$ \\
+$m$ & cota inferior del subgradiente \\
+$\kappa_{\mathrm{rel}}$ & número de condición relativo del problema \\
+$p$ & orden de convergencia \\
+$C$ & constante asintótica \\
+$E=p^{1/c}$ & índice de eficiencia de Ostrowski \\
+$c$ & costo por iteración en el índice teórico; el costo total incluye las evaluaciones auxiliares \\
+$h$ & paso de la derivada por diferencias finitas \\
+$\varepsilon_f,\varepsilon_x$ & tolerancias de residuo y de error de mesada certificado por el radio del intervalo \\
+$\Psi_n$ & operador de ajuste de RP, con propiedades de estabilidad condicionadas al régimen de activación \\
+$\delta_n,\eta_n$ & errores del saldo y de la mesada en el año $n$ \\
+$E_n$, $A_n$ & vector de errores absolutos y matriz de propagación del \cref{thm:propagacion} \\
+\bottomrule
+\end{longtable}
+
+\section*{Abreviaturas}
+
+\begin{longtable}{@{}p{.29\textwidth}p{.66\textwidth}@{}}
+\toprule
+AFP & Administradora de Fondos de Pensiones \\
+CAI & Cuenta de Ahorro Individual \\
+DANE & Departamento Administrativo Nacional de Estadística \\
+EIOPA & \emph{European Insurance and Occupational Pensions Authority} \\
+IPC & Índice de Precios al Consumidor \\
+ITP & \emph{Interpolate--Truncate--Project} \\
+RI-08 & etiqueta heredada de la serie de inválidos; año y procedencia normativa no acreditados \\
+RP & Retiro Programado \\
+RV & Renta Vitalicia \\
+RV-08 & tabla de mortalidad de rentistas válidos, 2008 \\
+SFC & Superintendencia Financiera de Colombia \\
+SMLV & Salario Mínimo Legal Mensual Vigente \\
+UFR & \emph{Ultimate Forward Rate} \\
+\bottomrule
+\end{longtable}

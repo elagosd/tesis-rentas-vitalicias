@@ -1,0 +1,167 @@
+\chapter{Conclusiones}
+\label{cap:conclusiones}
+
+\section{Respuesta a la pregunta de investigación}
+
+La elección del método se sustenta en la estructura del cotizador y en el costo de
+su implementación. La caracterización analítica obtenida puede resumirse así:
+
+\begin{aporte}
+En el modelo estudiado, la valoración es \textbf{afín a trozos}, con umbrales
+candidatos organizados en tres racimos geométricos para la parametrización
+considerada. La extensión a $M\ge0$ es constante en $[0,\SMLV]$, mientras que en
+el dominio admisible $M\ge\SMLV$ hay una raíz única si y solo si
+$\KA\ge\VP(\SMLV)$. El auxilio funerario puede destruir la convexidad. Las
+mesadas de la muestra de renta vitalicia examinada se sitúan en un intervalo
+afín; esa observación no describe la cartera completa de la compañía ni el
+mercado colombiano.
+\end{aporte}
+
+La derivada lateral exacta permite aprovechar los tramos sin aproximar pendientes
+por valoraciones auxiliares. Un paso de Newton obtiene la raíz cuando la clausura
+del tramo seleccionado contiene también la solución. Esta propiedad no garantiza
+una o dos iteraciones desde todo arranque ni identifica los pasos con el número
+de tramos atravesados. Para el problema interior con un encaje inicial válido, la
+variante semisuave con bisección periódica aporta una garantía global explícita
+(\cref{thm:salvaguardado}), por lo que constituye una recomendación fundada para
+el cotizador estudiado. Su costo y el de las otras alternativas deben leerse en
+el \cref{cap:resultados}, con la contabilidad completa allí definida; la
+recomendación no establece una superioridad universal.
+
+\section{Verificación de las hipótesis de trabajo}
+
+\begin{description}[leftmargin=1.1cm,style=nextline]
+\item[H1 --- caracterización analítica.] La representación afín a trozos y el
+  conjunto de hasta $\datoNQuiebresMax$ umbrales candidatos se obtienen de las
+  operaciones de máximo y recorte (\cref{thm:quiebres}). Un umbral candidato
+  puede no producir un salto efectivo si su peso es nulo.
+
+\item[H2 --- terminación bajo condiciones precisas.] La inversión exacta de un
+  tramo da la terminación en un paso si este contiene la raíz en su clausura.
+  La cota por número de tramos requiere las condiciones adicionales del
+  \cref{thm:terminacion-finita}; no es una igualdad general. Los experimentos
+  ilustran estas condiciones, sin convertir el comportamiento de la muestra en
+  una garantía para toda cotización.
+
+\item[H3 --- contabilidad de costo.] Las iteraciones no representan el mismo
+  trabajo en todos los métodos. La comparación contabiliza preparación,
+  valoraciones auxiliares y llamadas efectivas al motor, y las complementa con
+  tiempo de ejecución. Los cocientes de costo corresponden al protocolo y al
+  entorno medidos.
+
+\item[H4 --- derivada analítica conjunta.] Reutilizar los vectores de valoración
+  evita las llamadas auxiliares de las diferencias finitas. El costo marginal de
+  las derivadas no se considera nulo, y el ahorro efectivo se evalúa con el oráculo
+  conjunto de valor y derivadas. No se deduce un porcentaje fijo del número
+  nominal de evaluaciones por iteración.
+\end{description}
+
+\section{Contribuciones}
+
+\subsection{Al análisis del problema}
+
+El aporte central es integrar herramientas conocidas de valoración y análisis no
+suave para estudiar este cotizador. La condición de capital mínimo distingue
+falta de financiación, solución en el piso y solución interior. La expresión de
+las derivadas laterales da acceso al $B$-subdiferencial y relaciona el error de
+reserva con el de mesada. Las condiciones de terminación y el encaje separan la
+rapidez local de la garantía global.
+
+En retiro programado, el estado incluye el saldo y la mesada anterior porque los
+ajustes dependen de ambos. La cota del \cref{thm:propagacion} incorpora ese
+acoplamiento y permite escoger tolerancias a partir de un error admisible del
+saldo final, bajo sus hipótesis. No implica una amplificación universal ni
+permite comparar la conveniencia de las modalidades pensionales.
+
+\subsection{A la práctica}
+
+La implementación incorpora las derivadas laterales, un catálogo instrumentado de
+\datoNMetodos{} métodos y un protocolo que distingue trabajo del motor,
+precisión y tiempo. Los hallazgos de la \cref{sec:hallazgos-codigo} permiten
+revisar el tratamiento del piso, la parada y los ajustes de retiro programado.
+La aplicación interactiva facilita explorar las consecuencias de los parámetros;
+su uso no sustituye una nota técnica ni la validación de un producto comercial.
+
+\section{Limitaciones}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Alcance del modelo.} Se analiza una implementación particular, no
+        una representación exhaustiva de las obligaciones regulatorias ni de la
+        tarificación comercial. Reserva, capital y prima requieren conciliación
+        sobre fecha, componentes y base de valoración comunes.
+
+  \item \textbf{Representatividad.} Las muestras proceden de una sola compañía y
+        no permiten inferir propiedades de su cartera completa o del mercado.
+        Los escenarios sintéticos amplían la cobertura numérica, sin aportar
+        representatividad estadística de esas poblaciones.
+
+  \item \textbf{Bases actuariales.} La procedencia de las series de mortalidad,
+        los años base de mejora y los factores de aplicabilidad requieren
+        documentación adicional. El ajuste descriptivo de Gompertz no valida
+        esos niveles; la dependencia entre vidas tampoco se cuantifica. Cambiar
+        pesos independientes de $M$ conserva la forma afín a trozos, pero las
+        propiedades que requieren positividad deben comprobarse de nuevo.
+
+  \item \textbf{Calibración y retiro programado.} La volatilidad, los recargos de
+        mortalidad y el beneficiario hipotético no cuentan con calibración
+        acreditada. El factor NI puede reproducir la referencia empleada para
+        calibrarlo, lo que no constituye validación independiente. Deben
+        conciliarse además las bases monetarias de rendimientos y pagos y la
+        aproximación temporal de los retiros. Las trayectorias son ilustrativas.
+
+  \item \textbf{Condiciones de la cota.} La propagación supone trayectorias con
+        las mismas funciones de valoración, parámetros y rendimientos, y
+        soluciones admisibles en un horizonte común. Cambiar referencias o
+        recalibrar entre trayectorias exige términos adicionales. El cierre de
+        una simulación por insuficiencia de capital no determina la extinción
+        jurídica del derecho pensional.
+
+  \item \textbf{Garantías y medición.} La terminación exacta se formula en
+        aritmética exacta; el programa se detiene con tolerancias y redondeo.
+        Los tiempos dependen del entorno y los órdenes empíricos requieren
+        suficientes errores antes de la saturación numérica. La reproducción
+        exige conservar versiones, entradas y configuración de cada ejecución.
+\end{enumerate}
+
+\section{Trabajo futuro}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Conciliación actuarial.} Documentar fuentes, transformaciones,
+        fechas y componentes de valoración; explicar las discrepancias antes de
+        introducir multiplicadores y separar datos de calibración y evaluación.
+
+  \item \textbf{Curvas de descuento.} Calibrar Smith--Wilson con observaciones y
+        convenciones monetarias coherentes, contrastar alternativas y examinar
+        su efecto en las reservas. Contar con más nodos no acredita por sí solo
+        la idoneidad de la curva.
+
+  \item \textbf{Dependencia y experiencia.} Estimar conjuntamente las bases de
+        mortalidad y su posible dependencia con datos adecuados. Si la
+        dependencia modifica solo pesos independientes de $M$, puede estudiarse
+        su efecto sin perder la representación afín a trozos.
+
+  \item \textbf{Proyección y comparación de modalidades.} Justificar la dinámica
+        financiera y los ajustes, utilizar trayectorias comunes para comparar
+        sensibilidades y definir criterios de riesgo y suficiencia antes de
+        extraer conclusiones sobre modalidades pensionales.
+
+  \item \textbf{Arranque en caliente.} Medir su utilidad y establecer condiciones
+        para que la mesada anterior, expresada en la base monetaria pertinente,
+        permanezca en un tramo que contenga la nueva raíz. La cercanía entre años
+        no garantiza esa condición.
+
+  \item \textbf{Extensiones del problema.} Estudiar la inversión respecto de la
+        tasa y las bases de mortalidad estocásticas. La forma afín a trozos en la
+        mesada no se traslada automáticamente a otras incógnitas; la teoría
+        necesaria depende de si se busca la raíz de una esperanza o una raíz
+        condicionada a cada escenario.
+\end{enumerate}
+
+\section{Reflexión final}
+
+La \cref{fig:residuo-lineal} ilustra por qué una función cercana a una recta puede
+requerir atención en sus quiebres y en el piso. Reconocer esa estructura permite
+resolver el caso habitual con pocas operaciones y, a la vez, identificar los
+casos donde faltan capital, hipótesis de convergencia o evidencia actuarial. El
+valor del análisis reside en delimitar esas condiciones y documentar la precisión
+obtenida, sin confundir exactitud numérica con validez del modelo.

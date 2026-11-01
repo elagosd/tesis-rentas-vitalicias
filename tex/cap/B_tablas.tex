@@ -1,0 +1,43 @@
+\chapter{Tablas completas de resultados}
+\label{ap:tablas}
+
+Se recogen aquí los resultados desagregados por conjunto de datos. Todas las
+cifras provienen de la misma ejecución del banco de pruebas descrito en el
+\cref{cap:resultados} y son reproducibles con el procedimiento del
+\cref{ap:software}.
+
+Los cuatro conjuntos son: los \datoNSinteticos{} escenarios sintéticos con la
+tolerancia de producción; las \datoNReales{} pólizas reales de renta vitalicia;
+los \datoNRealesRP{} casos procedentes del conjunto de retiro programado,
+evaluados en el catálogo con la misma función de valoración de renta vitalicia;
+y de nuevo los escenarios sintéticos con tolerancia estricta
+($\varepsilon_f=10^{-6}$), que permite contrastar el trabajo requerido al
+exigir un residuo menor. Las sucesiones de pocos pasos o con terminación
+finita no permiten estimar un orden asintótico.
+
+\begin{center}
+\small
+\input{tablas/tabla_apendice}
+\end{center}
+
+\section*{Lectura del conjunto de tolerancia estricta}
+
+El contraste entre el primer bloque (tolerancia de producción,
+$\varepsilon_f=\datoEpsilonProd$) y el último (tolerancia estricta,
+$\varepsilon_f=10^{-6}$) permite examinar la sensibilidad del costo a la
+precisión solicitada:
+
+\begin{itemize}[leftmargin=*]
+  \item Para la bisección, reducir por diez la tolerancia de error certificada
+        por el intervalo exige unas $\log_2(10)\approx3{,}3$ reducciones
+        adicionales en su cota de peor caso (\cref{thm:cota-biseccion}). Una
+        parada anterior por residuo puede reducir ese número. Esta cota no
+        clasifica a ITP como método de orden lineal ni describe por sí sola
+        el costo de regula falsi.
+  \item Para los métodos que aprovechan el tramo afín de la raíz, el
+        \cref{thm:terminacion-finita} explica que una tolerancia más estricta
+        pueda requerir pocos pasos adicionales o ninguno en aritmética exacta.
+        En el cómputo efectivo intervienen el redondeo y las evaluaciones
+        necesarias para certificar la parada; los conteos de la tabla son
+        observaciones de estos casos, no una estimación de orden asintótico.
+\end{itemize}

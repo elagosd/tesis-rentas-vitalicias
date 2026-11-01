@@ -1,0 +1,346 @@
+\chapter{Preliminares matemáticos}
+\label{cap:preliminares}
+
+Este capítulo reúne los resultados que se usarán después: el modelo probabilístico
+de la supervivencia (\cref{sec:prob}), el análisis convexo y no suave
+(\cref{sec:nosuave}) y la teoría de convergencia de métodos iterativos
+(\cref{sec:convergencia}). La conjunción de los dos primeros, que la literatura
+presenta por separado, es lo que permite el análisis del \cref{cap:estructura}.
+
+\section{El modelo probabilístico de la supervivencia}
+\label{sec:prob}
+
+\subsection{Tiempo futuro de vida}
+
+\begin{definition}[Tiempo futuro de vida]
+Sea $(\Omega,\mathcal{F},\Prob)$ un espacio de probabilidad. Para un individuo de
+edad $x$ se define el \emph{tiempo futuro de vida} como la variable aleatoria
+\[
+  T_x:\Omega\longrightarrow[0,\infty),
+\]
+donde $T_x(\omega)$ es el tiempo transcurrido desde la edad $x$ hasta el
+fallecimiento en el estado $\omega$.
+\end{definition}
+
+\begin{definition}[Funciones de supervivencia y de fallecimiento]
+Para $t\ge 0$ se definen
+\[
+  \npx{t}{x} \;=\; S_x(t) \;=\; \Prob(T_x>t),
+  \qquad
+  \nqx{t}{x} \;=\; 1-\npx{t}{x} \;=\; F_{T_x}(t).
+\]
+\end{definition}
+
+La función $\npx{t}{x}$ es no creciente, con $\npx{0}{x}=1$ y
+$\lim_{t\to\infty}\npx{t}{x}=0$. La propiedad que se usará repetidamente es la
+descomposición multiplicativa.
+
+\begin{lemma}[Descomposición de la supervivencia]
+\label{lem:descomposicion}
+Para $s,t\ge0$,
+\[
+  \npx{t+s}{x} \;=\; \npx{t}{x}\cdot \npx{s}{x+t}.
+\]
+\end{lemma}
+\begin{proof}
+Por definición de probabilidad condicional,
+$\Prob(T_x>t+s)=\Prob(T_x>t)\,\Prob(T_x>t+s \mid T_x>t)$, y el segundo factor es
+$\npx{s}{x+t}$ cuando ambas probabilidades proceden de la misma tabla por edad.
+En un modelo de cohorte la identidad condicional se conserva, incorporando
+también la fecha calendario al segundo factor \citep{pitacco2009}.
+\end{proof}
+
+\begin{corollary}[Versión discreta]
+\label{cor:discreta}
+Si $q_{x}$ denota la probabilidad de fallecer entre las edades $x$ y $x+1$,
+entonces
+\begin{equation}
+\label{eq:npx-producto}
+  \npx{t}{x} \;=\; \prod_{j=1}^{t}\bigl(1-q_{x+j-1}\bigr),\qquad t\in\N.
+\end{equation}
+\end{corollary}
+
+La ecuación \cref{eq:npx-producto} es la forma en que efectivamente se calcula la
+supervivencia en el modelo implementado, sobre una malla mensual\footnote{La mensualización de una tabla anual exige una hipótesis sobre la distribución de los fallecimientos dentro del año. El modelo implementado adopta la de \emph{fallecimientos uniformemente distribuidos}, que conduce a la expresión $q^{(t)}_{x}=(q_x/12)/(1-s\,q_x)$ con $s$ la fracción de año transcurrida. Es la convención estándar; véase \citet[cap.~3]{dickson2020}.}.
+
+La \emph{fuerza de mortalidad} es $\mu_{x+t}=-\frac{d}{dt}\ln\npx{t}{x}$, de modo que
+$\npx{t}{x}=\exp\bigl(-\int_0^t\mu_{x+s}\,ds\bigr)$. Una tabla sigue la \emph{ley de
+Gompertz} si $\mu_x=Ae^{bx}$ con $A,b>0$, lo que equivale aproximadamente a que
+$\ln q_x$ sea afín en $x$; esa ley permite contrastar las tablas usadas, como se hace
+en la \cref{sec:var-demograficas}.
+
+\subsection{Modelos multivida}
+
+Sea $Y=\{y_1,\dots,y_n\}$ un grupo de personas con tiempos futuros de vida
+$T_{y_1},\dots,T_{y_n}$. Sea $D_y$ el tiempo de vencimiento del derecho de $y$,
+en las mismas unidades que $T_y$, con $D_y=\infty$ para un derecho vitalicio.
+Para derechos de duración determinista se define $H_y=\min\{T_y,D_y\}$ y
+$p_y^{\mathrm{der}}(t)=\Prob(H_y>t)$, incorporando la convención mensual de
+$\DURA_y$ al fijar el extremo de vigencia. Un contrato \emph{de último
+sobreviviente con derecho} paga mientras al menos uno conserve el derecho;
+su tiempo de terminación es
+\[
+  T_Y \;=\; \max_{y\in Y} H_y.
+\]
+
+\begin{proposition}[Factor de contingencia del amparo básico]
+\label{prop:conab}
+Si los tiempos $T_y$, $y\in Y$, son independientes y los $D_y$ son
+deterministas, entonces
+\begin{equation}
+\label{eq:conab}
+  \CONAB(t)\;=\;\Prob(T_Y>t)\;=\;1-\prod_{y\in Y}\bigl(1-p_y^{\mathrm{der}}(t)\bigr).
+\end{equation}
+\end{proposition}
+\begin{proof}
+$\{T_Y>t\}=\bigcup_y\{H_y>t\}$. Como los $D_y$ son deterministas, la
+independencia de los $T_y$ implica la de los $H_y$. La probabilidad del
+complemento es, por tanto, $\prod_y\Prob(H_y\le t)
+=\prod_y(1-p_y^{\mathrm{der}}(t))$.
+\end{proof}
+
+En las fórmulas del motor, $\npx{t}{y}$ denota esta supervivencia efectiva
+después de truncar por la duración del derecho; coincide con la supervivencia
+biológica mientras no opere ese truncamiento.
+
+\begin{remark}[Sobre la hipótesis de independencia]
+La independencia entre las vidas de un grupo familiar es una simplificación del
+motor: la literatura documenta correlación positiva en la mortalidad conyugal
+\citep{frees1996}. Para el objeto de este trabajo la hipótesis es inocua en un
+sentido preciso: cualquier modelo de dependencia produce otro $\CONAB(t)$, que no
+depende de $M$ y entra en $\VP$ como un peso, de modo que la forma funcional
+estudiada en el \cref{cap:estructura} se conserva; las propiedades que exigen
+pesos positivos deben verificarse de nuevo (\cref{sec:var-dependencia}).
+\end{remark}
+
+\subsection{Valor presente de flujos contingentes}
+
+\begin{definition}
+Sea $\{C_t\}_{t\ge1}$ una sucesión de flujos aleatorios y $v_t>0$ el factor de
+descuento del periodo $t$. El \emph{valor presente aleatorio} es
+$Z=\sum_{t\ge1}v_tC_t$ y el \emph{valor presente actuarial} es $\Esp[Z]$.
+\end{definition}
+
+\begin{theorem}[Intercambio de esperanza y suma]
+\label{thm:tonelli}
+Si $C_t\ge0$ casi seguramente para todo $t$, entonces
+\begin{equation}
+\label{eq:tonelli}
+  \Esp\Bigl[\sum_{t\ge1}v_tC_t\Bigr]\;=\;\sum_{t\ge1}v_t\,\Esp[C_t],
+\end{equation}
+con ambos miembros posiblemente infinitos. Si además
+$\sum_t v_t\Esp|C_t|<\infty$, ambos miembros son finitos y la serie converge
+absolutamente.
+\end{theorem}
+\begin{proof}
+La primera afirmación es el teorema de Tonelli aplicado a la medida producto
+$\Prob\otimes\nu$, donde $\nu$ es la medida de conteo en $\N$, para el integrando
+no negativo $(\omega,t)\mapsto v_tC_t(\omega)$. La segunda es el teorema de Fubini
+bajo la hipótesis de integrabilidad \citep[cap.~18]{billingsley1995}.
+\end{proof}
+
+En el modelo de este trabajo los flujos son no negativos y la suma es
+\emph{finita} --- el horizonte es de \datoNMeses{} meses ---, de modo que
+\cref{eq:tonelli} se aplica sin hipótesis de convergencia adicionales.
+
+\begin{corollary}[Valor presente de una renta contingente]
+\label{cor:vp-renta}
+Si $C_t=M_t\,\ind_{\{T_Y>t\}}$ con $M_t$ determinista, entonces
+\[
+  \Esp[Z]\;=\;\sum_{t\ge1}v_t\,M_t\,\CONAB(t).
+\]
+\end{corollary}
+\begin{proof}
+$\Esp[\ind_{\{T_Y>t\}}]=\Prob(T_Y>t)=\CONAB(t)$ y $M_t$, $v_t$ son constantes;
+se aplica \cref{thm:tonelli}.
+\end{proof}
+
+\section{Análisis convexo y no suave}
+\label{sec:nosuave}
+
+\subsection{Convexidad y operadores que la preservan}
+
+\begin{lemma}[Operaciones que preservan convexidad]
+\label{lem:preserva-convexidad}
+\begin{enumerate}[label=(\alph*),nosep]
+  \item El máximo puntual de una familia de funciones afines es convexo.
+  \item Una combinación cónica $\sum_i w_ig_i$ con $w_i\ge0$ de funciones convexas
+        es convexa.
+  \item El \textbf{mínimo} de dos funciones convexas \emph{no} es convexo en
+        general.
+\end{enumerate}
+\end{lemma}
+
+El apartado (c) es el que produce la pérdida de convexidad del
+\cref{thm:no-convexidad}: el operador de recorte
+$\med(a,u,b)=\min\bigl(\max(u,a),b\bigr)$ aplica un mínimo sobre una función
+convexa.
+
+\begin{definition}[Operador de recorte]
+Para $a\le b$,
+\[
+  \med(a,u,b)\;=\;\min\bigl(\max(u,a),\,b\bigr)
+  \;=\;\begin{cases} a, & u<a,\\ u, & a\le u\le b,\\ b, & u>b.\end{cases}
+\]
+\end{definition}
+
+\begin{lemma}
+\label{lem:recorte}
+$\med(a,\cdot,b)$ es no decreciente, $1$-Lipschitz, lineal a trozos con quiebres
+en $a$ y $b$; es convexa en $(-\infty,b]$ y cóncava en $[a,\infty)$, y no es ni
+convexa ni cóncava en $\R$ si $a<b$.
+\end{lemma}
+\begin{proof}
+La monotonía y la constante de Lipschitz son inmediatas del hecho de que la
+pendiente vale $0$ o $1$. Para la última afirmación basta observar que la
+pendiente pasa de $0$ a $1$ en $a$ (salto positivo, compatible con convexidad) y
+de $1$ a $0$ en $b$ (salto negativo, incompatible con convexidad).
+\end{proof}
+
+\subsection{Funciones lineales a trozos}
+
+\begin{definition}[Función lineal a trozos]
+$g:\R\to\R$ es \emph{lineal a trozos} (o afín a trozos) si existe una partición
+finita $-\infty=\beta_0<\beta_1<\cdots<\beta_m<\beta_{m+1}=+\infty$ tal que $g$ es
+afín en cada $[\beta_j,\beta_{j+1}]$. Los puntos $\beta_j$ se llaman
+\emph{quiebres}.
+\end{definition}
+
+\begin{lemma}
+\label{lem:pl-cerrado}
+La clase de funciones lineales a trozos es cerrada bajo sumas finitas,
+multiplicación por escalares, $\max$, $\min$ y composición. El conjunto de
+quiebres de una suma está contenido en la unión de los conjuntos de quiebres de
+los sumandos.
+\end{lemma}
+
+\subsection{Subdiferenciales}
+
+Para $g$ localmente Lipschitz, sea $D_g$ el conjunto (de medida plena, por el
+teorema de Rademacher) donde $g$ es diferenciable.
+
+\begin{definition}[$B$-subdiferencial y subdiferencial de Clarke]
+\[
+  \dB g(u)\;=\;\Bigl\{\, \lim_{k\to\infty} g'(u_k)\;:\; u_k\to u,\ u_k\in D_g \,\Bigr\},
+  \qquad
+  \dC g(u)\;=\;\operatorname{conv}\bigl(\dB g(u)\bigr).
+\]
+\end{definition}
+
+\begin{lemma}
+\label{lem:subdif-pl}
+Si $g$ es lineal a trozos con pendientes $s^-$ y $s^+$ a izquierda y derecha de
+$u$, entonces $\dB g(u)=\{s^-,s^+\}$ y $\dC g(u)=[\min(s^-,s^+),\max(s^-,s^+)]$.
+En particular $\dB g(u)=\dC g(u)=\{g'(u)\}$ si $u$ no es un quiebre.
+\end{lemma}
+
+Nótese que para el algoritmo importa $\dB$ y no $\dC$: el método de Newton
+semisuave usa un elemento de $\dB$, que es una \emph{pendiente efectivamente
+realizada} por la función, mientras que un elemento interior de $\dC$ puede no
+corresponder a ninguna dirección de la gráfica. Esta distinción explica el sesgo
+de las diferencias finitas centradas que se cuantifica en la
+\cref{prop:sesgo-diferencias}.
+
+\subsection{Semisuavidad}
+
+\begin{definition}[Semisuavidad, \citealp{qi1993}]
+$g$ localmente Lipschitz es \emph{semisuave} en $u$ si es direccionalmente
+diferenciable en $u$ y
+\[
+  \sup_{V\in\dC g(u+d)} \bigl| g(u+d)-g(u)-V d \bigr| \;=\; o(|d|)
+  \qquad (d\to0),
+\]
+y \emph{fuertemente semisuave} si el miembro izquierdo es $O(|d|^2)$.
+\end{definition}
+
+\begin{lemma}
+\label{lem:pl-semisuave}
+Toda función lineal a trozos es fuertemente semisuave. Más aún, para $|d|$
+suficientemente pequeño el término de error es exactamente $0$ si no hay quiebres
+en el segmento $[u,u+d]$.
+\end{lemma}
+\begin{proof}
+Fijado $u$, elíjase $r>0$ de modo que no haya quiebres distintos de $u$
+en $(u-r,u+r)$. Para $0<|d|<r$, el punto $u+d$ pertenece al interior
+de un tramo afín cuya clausura contiene a $u$. Por continuidad, si $V$
+es su pendiente, $g(u+d)-g(u)=Vd$. En ese punto
+$\dC g(u+d)=\{V\}$, por lo que el supremo de la definición es cero.
+Para $d=0$ la igualdad es inmediata. Se obtiene así semisuavidad fuerte.
+\end{proof}
+
+\begin{theorem}[Convergencia del método de Newton semisuave, \citealp{qi1993}]
+\label{thm:qi-sun}
+Sea $g$ semisuave en una raíz $u^*$ y $BD$-regular allí, es decir, todo
+$V\in\dB g(u^*)$ es no singular. Entonces existe $\varepsilon>0$ tal que la
+iteración
+\[
+  u_{k+1}\;=\;u_k - V_k^{-1}g(u_k),\qquad V_k\in\dB g(u_k),
+\]
+está bien definida y converge superlinealmente a $u^*$ para todo
+$u_0$ con $|u_0-u^*|<\varepsilon$, o termina en un número finito de pasos.
+Si $g$ es fuertemente semisuave, satisface localmente
+$|u_{k+1}-u^*|=O(|u_k-u^*|^2)$; esta cota incluye la terminación finita.
+\end{theorem}
+
+\section{Convergencia de métodos iterativos}
+\label{sec:convergencia}
+
+\begin{definition}[Orden de convergencia]
+Una sucesión $\{x_k\}$ con $x_k\to x^*$ y $e_k=|x_k-x^*|>0$ converge con
+\emph{orden} $p\ge1$ y \emph{constante asintótica} $C>0$ si
+\[
+  \lim_{k\to\infty}\frac{e_{k+1}}{e_k^{\,p}}\;=\;C.
+\]
+Para $p=1$ y $0<C<1$ se habla de convergencia \emph{lineal} de
+razón $C$; para $p=2$ y $0<C<\infty$, de convergencia \emph{cuadrática}.
+La convergencia es \emph{superlineal} si $e_{k+1}/e_k\to0$.
+La terminación finita no se interpreta mediante un cociente asintótico con
+errores estrictamente positivos.
+\end{definition}
+
+\begin{remark}[Descriptores empíricos de la convergencia]
+\label{rem:estimacion-orden}
+El estimador clásico \citep[cap.~2]{burden2016},
+$\hat p_k=\ln(e_{k+1}/e_k)\big/\ln(e_k/e_{k-1})$, es muy sensible al ruido: basta
+que un iterado caiga fortuitamente cerca de la raíz para que devuelva un valor sin
+sentido. Esto ocurre sistemáticamente con la bisección, cuya sucesión de errores
+\emph{no es monótona}. En este trabajo se calcula una pendiente descriptiva
+por regresión de mínimos cuadrados de $\ln e_{k+1}$ contra $\ln e_k$ sobre
+los pares de errores útiles, descartando los que están por debajo del ruido
+de redondeo. Esa selección no identifica por sí sola una cola asintótica
+ni certifica el orden teórico, especialmente si hay terminación en pocos
+pasos. También se describen las razones entre errores sucesivos y, en los
+métodos de encaje, la reducción del ancho del intervalo, que es la magnitud
+que la teoría acota.
+\end{remark}
+
+\begin{definition}[Índice de eficiencia de Ostrowski, \citealp{ostrowski1966}]
+\label{def:ostrowski}
+Si un método tiene orden $p$ y requiere $c$ evaluaciones de la función objetivo
+por iteración, su \emph{índice de eficiencia} es
+\[
+  E \;=\; p^{1/c}.
+\]
+\end{definition}
+
+El índice de Ostrowski compara órdenes asintóticos cuando se realizan sus
+hipótesis y el costo por evaluación es comparable. Con los órdenes clásicos
+de la secante y de Newton con diferencias centradas se obtiene, respectivamente,
+$E=\varphi\approx1{,}618$ y $E=2^{1/3}\approx1{,}260$. En este problema afín a
+trozos, la terminación en pocos pasos impide interpretar esos valores como
+eficiencias asintóticas observadas. La comparación empírica del \cref{cap:resultados} contabiliza las evaluaciones efectivamente realizadas.
+
+\begin{theorem}[Cota de la bisección]
+\label{thm:cota-biseccion}
+Si $g$ es continua en $[a,b]$ y $g(a)g(b)<0$, la sucesión de puntos medios
+$\{x_k\}$ de la bisección satisface
+\[
+  |x_k-x^*|\;\le\;\frac{b-a}{2^{k+1}},
+\]
+y por tanto alcanza una tolerancia $\varepsilon$ en a lo sumo
+$\lceil\log_2((b-a)/\varepsilon)\rceil-1$ iteraciones.
+\end{theorem}
+
+La importancia del \cref{thm:cota-biseccion} para este trabajo es que su
+demostración usa \emph{únicamente} la continuidad. Esta cota no requiere diferenciabilidad de $\VP$; por eso la bisección
+funciona como referencia de robustez y como salvaguarda de los métodos híbridos.\footnote{Los métodos con encaje y las salvaguardas apropiadas también permiten garantías sin diferenciabilidad; debe distinguirse su cota de progreso de la cota específica de bisección.}

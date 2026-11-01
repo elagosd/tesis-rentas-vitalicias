@@ -1,0 +1,14 @@
+# Configuración de la presentación de la defensa.
+
+[theme]
+# La hoja de estilo está pensada para fondo claro; se fija el tema claro
+# aunque el sistema operativo esté en modo oscuro.
+base = "light"
+primaryColor = "#0072B2"
+
+[client]
+# Oculta el botón «Deploy» y el menú de desarrollador durante la defensa.
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

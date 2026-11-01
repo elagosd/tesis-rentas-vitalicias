@@ -1,0 +1,6 @@
+edad_min,edad_max,diferencia_edad_hombres,diferencia_edad_mujeres
+0,59,-5,2
+60,65,-7,1
+66,70,-8,0
+71,75,-9,-2
+76,999,-10,-5

@@ -1,0 +1,51 @@
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+\markboth{RESUMEN}{RESUMEN}
+
+\begin{singlespace}
+Este trabajo estudia la cotización de una renta vitalicia inmediata en un modelo
+particular que incorpora piso pensional, indexación y auxilio funerario. La mesada
+inicial $M$ se obtiene al resolver $f(M)=\VP(M)-\KA=0$, donde $\VP$ es el valor
+presente actuarial de las obligaciones incluidas y $\KA$ el capital objetivo,
+expresados sobre una misma base de valoración. La formulación estudia el cotizador
+implementado y no constituye una representación exhaustiva de la regulación ni de
+la tarificación comercial de las aseguradoras colombianas.
+
+Bajo las hipótesis del modelo, $\VP$ es \emph{lineal a trozos}, con a lo sumo
+$\datoNQuiebresMax$ umbrales candidatos agrupados en tres racimos geométricos
+alrededor de $1$, $5$ y $10$ salarios mínimos para la parametrización considerada.
+La extensión a $M\ge0$ es constante en $[0,\SMLV]$; en el dominio admisible
+$M\ge\SMLV$, existe una solución única si y solo si $\KA\ge\VP(\SMLV)$.
+El auxilio funerario puede producir pérdida de convexidad. Se obtiene una
+expresión cerrada de las derivadas laterales y del $B$\nobreakdash-subdiferencial,
+con interpretación como factores marginales de renta actuarial. Newton con una
+pendiente exacta alcanza la raíz en un paso cuando el tramo seleccionado contiene
+también la solución en su clausura; no se identifica el número de pasos con el de
+tramos atravesados. Una salvaguarda de encaje con bisección periódica proporciona
+convergencia global bajo las condiciones establecidas.
+
+Se comparan \datoNMetodos{} métodos en \datoNEscenarios{} escenarios, que incluyen
+\datoNSinteticos{} sintéticos, \datoNReales{} cotizaciones de renta vitalicia y
+\datoNRealesRP{} registros adicionales con información de retiro programado.
+La batería utiliza el objetivo RV; las trayectorias anuales de RP se estudian
+separadamente. La comparación distingue
+iteraciones, llamadas efectivas al motor y tiempo de ejecución; contabiliza la
+preparación y utiliza una evaluación conjunta de valor y derivadas cuando estas
+son analíticas. Los resultados se interpretan sobre los escenarios examinados y
+no como una clasificación universal de los métodos.
+
+El retiro programado se formula mediante el estado acoplado de capital y mesada
+anterior. Una cota condicional de propagación permite relacionar la tolerancia
+anual con un límite de error del saldo final. Se examinan además las fuentes y
+limitaciones de las variables actuariales, financieras y de calibración, y se
+documenta la implementación en Python. La precisión numérica y la concordancia
+con referencias de calibración no sustituyen la validación actuarial del modelo.
+\end{singlespace}
+
+\vspace{.5cm}
+\noindent\textbf{Palabras clave:} ecuaciones no lineales; métodos iterativos;
+análisis no suave; Newton semisuave; funciones lineales a trozos; matemática
+actuarial; rentas vitalicias; retiro programado.
+
+\vspace{.4cm}
+%\noindent\textbf{Clasificación MSC 2020:} 65H05, 49J52, 91G05, 90C31.

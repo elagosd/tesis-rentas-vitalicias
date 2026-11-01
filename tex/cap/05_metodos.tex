@@ -1,0 +1,622 @@
+\chapter{Métodos numéricos iterativos}
+\label{cap:metodos}
+
+Este capítulo presenta los \datoNMetodos{} métodos que se comparan en el trabajo.
+Para cada uno se enuncia la iteración, se establece su orden de convergencia
+teórico y se analiza \emph{qué le ocurre sobre el problema concreto} del \cref{cap:estructura}. Este último punto es el que da contenido al capítulo: sobre
+una función lineal a trozos, varios métodos pueden terminar en pocos pasos, y
+su comportamiento se explica mejor por la estructura del problema que por el
+orden asintótico que les asigna la teoría genérica.
+
+Los métodos se agrupan en tres familias según la información que utilizan y la
+garantía que ofrecen.
+
+\begin{table}[H]
+\centering
+\caption[Taxonomía de los métodos]{Taxonomía de los métodos comparados. La columna
+$c$ indica el costo nominal por iteración; para los métodos analíticos supone
+una obtención conjunta de valor y derivada. $E=p^{1/c}$ es el índice de
+eficiencia de Ostrowski (\cref{def:ostrowski}); el costo efectivo incluye todas
+las llamadas al motor.}
+\label{tab:taxonomia}
+\small
+\begin{tabular}{@{}llccc l@{}}
+\toprule
+\textbf{Familia} & \textbf{Método} & \textbf{$p$} & \textbf{$c$} & \textbf{$E$} & \textbf{Garantía} \\
+\midrule
+\multirow{8}{*}{Encaje}
+ & Bisección          & $1$      & $1$ & $1{,}000$ & global, solo continuidad \\
+ & Regula falsi       & $1$      & $1$ & $1{,}000$ & global \\
+ & Illinois           & $1{,}442$& $1$ & $1{,}442$ & global \\
+ & Pegasus            & $1{,}642$& $1$ & $1{,}642$ & global \\
+ & Anderson--Björck   & $1{,}710$& $1$ & $1{,}710$ & global \\
+ & Ridders            & $2$      & $2$ & $1{,}414$ & global \\
+ & Brent              & superlineal& $1$ & --- & global, con encaje \\
+ & ITP                & $1{,}618$& $1$ & $1{,}618$ & global, peor caso óptimo \\
+\midrule
+\multirow{9}{*}{Abiertos}
+ & Secante            & $1{,}618$& $1$ & $1{,}618$ & local \\
+ & Newton (dif.\ fin.)& $2$      & $3$ & $1{,}260$ & local \\
+ & Newton (analítico) & $2$      & $1$ & $2{,}000$ & local \\
+ & Steffensen         & $2$      & $2$ & $1{,}414$ & local \\
+ & Steffensen escalado& $2$      & $2$ & $1{,}414$ & local \\
+ & Müller             & $1{,}839$& $1$ & $1{,}839$ & local \\
+ & Halley             & $3$      & $3$ & $1{,}442$ & local \\
+ & Punto fijo relajado& $1$      & $1$ & $1{,}000$ & local, contracción \\
+ & Aitken--Steffensen & $2$      & $2$ & $1{,}414$ & local \\
+\midrule
+\multirow{2}{*}{No suaves}
+ & Newton semisuave   & $2$      & $1$ & $2{,}000$ & local, $BD$-regularidad \\
+ & Newton salvaguardado& finito local& $1$ & --- & global; bisección periódica \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Marco general y criterios de comparación}
+
+\subsection{El costo relevante}
+
+\begin{remark}[Por qué se cuentan evaluaciones y no iteraciones]
+\label{rem:costo}
+Una llamada al motor construye la proyección actuarial de $\datoNMeses$
+periodos y domina el costo de las pocas operaciones escalares de la iteración.
+La medida principal de trabajo es, por ello, el número de llamadas efectivas
+al motor, junto con el tiempo medido. Deben incluirse las llamadas que
+obtienen derivadas y las que preparan parámetros de relajación. El costo
+nominal de Newton analítico es una llamada por punto solo cuando valor y
+derivada se calculan conjuntamente y se reutilizan; si se calculan por
+separado, ambas llamadas se contabilizan. La secante necesita un nuevo valor
+por paso y Newton con diferencias centradas requiere, en general, tres.
+\end{remark}
+
+La instrumentación memoiza los valores ya calculados por punto. Una consulta
+resuelta desde esa memoria no constituye una nueva ejecución del motor. La
+misma convención debe aplicarse a todos los métodos y a la preparación que
+cada uno necesita.
+
+\subsection{Criterios de parada y el desajuste dimensional}
+\label{sec:parada}
+
+La tolerancia del residuo se expresa en unidades de capital. En los métodos
+con encaje también puede certificarse el error mediante el ancho del intervalo:
+\begin{equation}
+\label{eq:parada}
+  |f(x_k)|<\varepsilon_f
+  \qquad\text{o, con encaje válido,}\qquad
+  \frac{b_k-a_k}{2}\le\varepsilon_x ,
+\end{equation}
+devolviendo en el segundo caso el punto medio del intervalo. Un paso pequeño
+$|x_k-x_{k-1}|$ se utiliza como diagnóstico de estancamiento; por sí solo no
+certifica una raíz, pues un recorte al dominio puede producir un paso nulo
+con residuo no nulo.
+
+\begin{criticism}[Conversión del residuo en error de mesada]
+\label{crit:parada}
+El motor de producción utiliza una tolerancia de
+$\varepsilon_f=\datoEpsilonProd$ peso de capital. Para relacionarla con la
+exactitud de la mesada, supóngase que las pendientes de $\VP$ en el intervalo
+que une $x$ con $M^*$ están acotadas inferiormente por $m>0$. Entonces
+\[
+  |x-M^*|\le\frac{|f(x)|}{m}.
+\]
+En un mismo tramo afín puede tomarse $m=\VP'$, de modo que la pendiente
+$\datoPendienteAfin$ convierte un residuo de un peso en un error de mesada del
+orden de $4\cdot10^{-3}$ pesos. Para garantizar una tolerancia de mesada
+$\varepsilon$, es suficiente exigir $|f(x)|\le m\varepsilon$. Si se atraviesan
+quiebres, la derivada en un único punto no sustituye necesariamente a esa cota
+inferior. La recomendación~R3 de la \cref{sec:hallazgos-codigo} consiste en
+declarar las unidades de la tolerancia y certificar su conversión mediante
+una cota válida o mediante el encaje.
+\end{criticism}
+
+\section{Métodos con encaje}
+
+Todos comparten la hipótesis inicial $f(a)f(b)<0$ y la propiedad invariante de
+mantener un intervalo que contiene una raíz. Su virtud común es que la garantía de
+convergencia \emph{no usa diferenciabilidad}, y por tanto sobrevive intacta a la
+estructura no suave de $\VP$.
+
+\subsection{Bisección}
+
+\begin{algorithm}[H]
+\caption{Bisección}
+\label{alg:biseccion}
+\SetAlgoLined
+\KwIn{$f$, $[a,b]$ con $f(a)f(b)<0$, tolerancias}
+\While{no se cumpla \cref{eq:parada}}{
+  $x\leftarrow (a+b)/2$\;
+  \eIf{$f(a)f(x)<0$}{$b\leftarrow x$}{$a\leftarrow x$, $f(a)\leftarrow f(x)$}
+}
+\KwOut{$x$}
+\end{algorithm}
+
+Su análisis es el \cref{thm:cota-biseccion}. Sobre el problema de este trabajo, con
+$[a,b]=[S_0,25S_0]$ y $\varepsilon_x=10^{-8}$, la cota da
+$\lceil\log_2(24S_0/10^{-8})\rceil\approx52$ iteraciones. Con la tolerancia de
+producción en el residuo el número observado es $\datoEvBis$ evaluaciones en
+promedio\footnote{La discrepancia entre la cota teórica de unas cincuenta y dos iteraciones y las treinta y tres observadas se explica porque el criterio de parada efectivo es el del residuo y no el del paso: con una pendiente de $\datoPendienteAfin$, un residuo menor que un peso corresponde a un error en la mesada del orden de $4\cdot10^{-3}$ pesos, muy por encima de la tolerancia $\varepsilon_x=10^{-8}$ que da lugar a la cota.}.
+
+\begin{remark}[Una advertencia metodológica]
+\label{rem:sesgo-diadico}
+Un detalle del diseño experimental resulta crucial. Si la raíz se sitúa en un
+múltiplo «redondo» del salario mínimo, los puntos medios sucesivos de la bisección
+pueden coincidir \emph{exactamente} con ella por pura aritmética del encaje. En una
+versión preliminar de los experimentos, con objetivos en $2{,}5$ y $5{,}0$
+salarios mínimos, la bisección aparentaba converger en $6$ evaluaciones ---
+compitiendo con Newton --- por este artefacto. Los escenarios definitivos usan
+multiplicadores irracionales (por ejemplo, $1+\sqrt2$ y $3+\sqrt5$) para
+reducir ese sesgo. El efecto sobre la conclusión es grande: el costo medio
+de la bisección pasa de $21{,}6$ a $\datoEvBis$ evaluaciones\footnote{Se documenta este episodio porque ilustra un riesgo metodológico general en la comparación de algoritmos: los conjuntos de prueba construidos con valores «redondos» pueden favorecer sistemáticamente a los métodos cuya aritmética coincide con esa forma de redondeo. La bisección, que divide en potencias de dos, es especialmente vulnerable a ello.}.
+\end{remark}
+
+\subsection{Regula falsi y sus correcciones}
+
+La regula falsi sustituye el punto medio por la raíz de la cuerda:
+\begin{equation}
+\label{eq:regula}
+  x \;=\; b - f(b)\,\frac{b-a}{f(b)-f(a)} .
+\end{equation}
+
+\begin{proposition}[Estancamiento de la regula falsi]
+\label{prop:estancamiento}
+Si $f$ es continua, estrictamente convexa y estrictamente creciente en $[a,b]$,
+con $f(a)<0<f(b)$, el extremo $b$ se conserva en las iteraciones exactas
+de regula falsi y el ancho del encaje tiende a $b-x^*>0$. Si además $f$ es
+continuamente diferenciable en un entorno de la raíz y $f'(x^*)>0$, la
+convergencia es lineal con razón
+$R=1-f'(x^*)(b-x^*)/f(b)\in(0,1)$.
+\end{proposition}
+\begin{proof}
+La convexidad estricta sitúa la gráfica estrictamente por debajo de la
+cuerda en el interior. En la raíz de la cuerda se tiene, por tanto,
+$f(x)<0$ y se actualiza $a\leftarrow x$. El extremo derecho se conserva.
+La sucesión de extremos izquierdos crece hacia la raíz y su límite da
+el ancho indicado. La linealización de \cref{eq:regula} respecto del
+extremo izquierdo en $x^*$ proporciona $R$. La pendiente de la cuerda
+entre $x^*$ y $b$ es estrictamente mayor que $f'(x^*)$, de donde
+$0<R<1$. Con convexidad no estricta puede haber tramos afines y
+terminación exacta; ese caso no implica estancamiento asintótico.
+\end{proof}
+
+En el modelo afín a trozos, la conservación de un extremo puede coexistir
+con una buena reducción del residuo. Deben distinguirse el ancho del
+encaje y el error del punto propuesto; la proposición anterior no se aplica
+como una hipótesis de convexidad estricta global a $\VP$.
+
+Las tres correcciones clásicas atacan el estancamiento reduciendo por un factor
+$\gamma$ el valor de $f$ en el extremo retenido:
+\begin{align*}
+  \text{Illinois:}&\quad \gamma=\tfrac12,\\
+  \text{Pegasus:}&\quad \gamma=\frac{f(b)}{f(b)+f(x)},\\
+  \text{Anderson--Björck:}&\quad \gamma=\max\Bigl\{1-\frac{f(x)}{f(b)},\ \tfrac12\Bigr\}.
+\end{align*}
+Los órdenes resultantes son $1{,}442$, $1{,}642$ y $1{,}710$ respectivamente
+\citep{dowell1972,anderson1973}, con una sola evaluación por paso: son, en
+términos del índice de Ostrowski, de los métodos más eficientes del catálogo entre
+los que conservan garantía global.
+
+\begin{remark}
+La coincidencia de conteos medios entre variantes no implica que sus
+sucesiones de iterados sean idénticas. La estructura afín explica que las
+diferencias puedan ser pequeñas: cuando los dos puntos que definen la
+cuerda pertenecen al mismo tramo que contiene la raíz, la interpolación
+lineal es exacta. Fuera de esa situación deben contrastarse las
+trayectorias, además de sus conteos agregados.
+\end{remark}
+
+\subsection{Ridders}
+
+Supone que $g(x)=f(x)e^{Q(x-x_1)}$ es lineal para un $Q$ adecuado. Evaluando en el
+punto medio $x_2$ y despejando se obtiene
+\begin{equation}
+\label{eq:ridders}
+  x_3 \;=\; x_2 + (x_2-a)\,\frac{\sgn\bigl(f(a)-f(b)\bigr)\,f(x_2)}
+                                {\sqrt{f(x_2)^2-f(a)f(b)}} .
+\end{equation}
+El iterado $x_3$ siempre cae dentro de $[a,b]$, de modo que conserva el encaje, y
+la convergencia es cuadrática por \emph{par} de evaluaciones, es decir de orden
+$\sqrt2$ por evaluación \citep{ridders1979}.
+
+\subsection{Brent}
+
+Combina interpolación cuadrática inversa, secante y bisección, aceptando el
+candidato interpolado solo si satisface condiciones de progreso
+\citep{brent1973}. Conserva el encaje y presenta convergencia superlineal en
+el caso regular. La interpolación no implica que el número de iteraciones
+coincida con la cota de la bisección en todo problema. Se utiliza como
+referencia de un método híbrido disponible en bibliotecas científicas, como
+\texttt{scipy.optimize.brentq}.
+
+\subsection{ITP}
+
+El método \emph{Interpolate--Truncate--Project} \citep{oliveira2021} es el
+resultado más reciente del catálogo. En cada iteración:
+\begin{enumerate}[nosep,leftmargin=*]
+  \item \textbf{Interpolar:} calcular el candidato de regula falsi $x_f$.
+  \item \textbf{Truncar:} desplazarlo hacia el punto medio a lo sumo
+        $\delta=\kappa_1|b-a|^{\kappa_2}$, obteniendo $x_t$.
+  \item \textbf{Proyectar:} proyectar $x_t$ sobre el intervalo minmax
+        $[x_{1/2}-r,\;x_{1/2}+r]$ con
+        $r=\varepsilon 2^{n_{\max}-j}-\tfrac12(b-a)$.
+\end{enumerate}
+La etapa 3 es la que garantiza que ITP nunca gaste más de $n_0$ iteraciones
+adicionales sobre la cota de la bisección\footnote{El resultado de \citet{oliveira2021} es notable porque durante décadas se consideró que la optimalidad en el peor caso y la convergencia superlineal eran objetivos incompatibles: los métodos rápidos degradaban en el peor caso y los robustos no aceleraban en el caso bueno. ITP alcanza ambas.}, y --- punto clave para este trabajo ---
+esa garantía no usa diferenciabilidad, luego sobrevive en los quiebres.
+
+\begin{remark}[Por qué ITP resulta caro aquí]
+Los experimentos muestran que ITP requiere $\datoEvITP$ evaluaciones, muy por
+encima de Brent. No es un defecto del método sino del ajuste de sus parámetros: la
+etapa de proyección está calibrada para \emph{garantizar} el peor caso, y con el
+intervalo de partida $[S_0,25S_0]$, muy amplio respecto de la raíz típica, la
+proyección domina sobre la interpolación durante muchas iteraciones. Cabe
+esperar que un intervalo inicial más ajustado reduzca ese costo, aunque esa
+variante no se midió en este trabajo. Es un ejemplo instructivo de que la optimalidad en el peor caso se paga en el caso
+medio.
+\end{remark}
+
+\section{Métodos abiertos}
+
+\subsection{Secante}
+
+\begin{equation}
+\label{eq:secante}
+  x_{k+1} \;=\; x_k - f(x_k)\,\frac{x_k-x_{k-1}}{f(x_k)-f(x_{k-1})} .
+\end{equation}
+
+La secante es el método configurado por defecto en el motor de valoración.
+
+\begin{theorem}[Orden de la secante]
+\label{thm:orden-secante}
+Sea $f\in C^2$ en un entorno de una raíz simple $x^*$, con
+$f''(x^*)\ne0$. Para una sucesión de secante bien definida, iniciada con
+dos puntos distintos suficientemente próximos a $x^*$, que converge a
+$x^*$ sin terminación finita, los errores absolutos satisfacen
+\[
+ e_{k+1}=C\,e_ke_{k-1}(1+o(1)),\qquad
+ C=\frac{|f''(x^*)|}{2|f'(x^*)|}>0.
+\]
+Su orden es $\varphi=(1+\sqrt5)/2\approx1{,}618$. La condición de no
+degeneración excluye, en particular, el tramo afín, en el que puede haber
+terminación exacta en lugar de un régimen asintótico.
+\end{theorem}
+
+\begin{proposition}[La secante sobre una función afín a trozos]
+\label{prop:secante-afin}
+Si $x_{k-1}$ y $x_k$ son distintos, pertenecen al mismo tramo afín de $f$
+con pendiente no nula, y ese tramo contiene la raíz, entonces
+$x_{k+1}=x^*$ exactamente en aritmética exacta.
+\end{proposition}
+\begin{proof}
+En ese tramo $f(u)=\alpha u+\beta$ con $\alpha\neq0$. La pendiente de la secante es
+$(f(x_k)-f(x_{k-1}))/(x_k-x_{k-1})=\alpha$, y \cref{eq:secante} da
+$x_{k+1}=x_k-f(x_k)/\alpha=-\beta/\alpha=x^*$.
+\end{proof}
+
+Esta propiedad explica el buen comportamiento observado de la secante. Cuando
+la sucesión alcanza la solución en pocos pasos, una regresión sobre los errores
+es un descriptor de esa sucesión y no una estimación fiable del orden
+asintótico.
+
+\subsection{Newton con diferencias finitas}
+
+Sustituye la derivada por una diferencia centrada:
+\begin{equation}
+\label{eq:newton-fd}
+  x_{k+1} \;=\; x_k - \frac{f(x_k)}{D_h f(x_k)},
+  \qquad
+  D_hf(x)=\frac{f(x+h)-f(x-h)}{2h} .
+\end{equation}
+
+\begin{proposition}[Exactitud y efecto de los quiebres en la diferencia centrada]
+\label{prop:sesgo-diferencias}
+Sea $f$ continua y lineal a trozos, con conjunto finito de quiebres
+$\mathcal B$, y sea $h>0$.
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+  \item Si $[x-h,x+h]\cap\mathcal B=\emptyset$, entonces
+        $D_hf(x)=f'(x)$ en aritmética exacta.
+  \item Si $\beta\in(x-h,x+h)$ es el único quiebre de la ventana y
+        $s^-,s^+$ son las pendientes a sus lados, entonces
+        \[
+          D_hf(x)=\theta s^-+(1-\theta)s^+,
+          \qquad \theta=\frac{\beta-x+h}{2h}\in(0,1).
+        \]
+        Si $x=\beta$, esta cantidad pertenece a $\dC f(\beta)$.
+        Si $x\ne\beta$, no tiene por qué pertenecer a $\dC f(x)$.
+  \item Si $\widetilde f(x\pm h)=f(x\pm h)+e_\pm$, con
+        $|e_\pm|\le\eta_\pm$, el error propagado a la diferencia,
+        considerando exactas la resta y la división finales, satisface
+        \[
+          \left|\frac{\widetilde f(x+h)-\widetilde f(x-h)}{2h}
+                 -D_hf(x)\right|
+          \le\frac{\eta_++\eta_-}{2h}.
+        \]
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+En (a), $f$ es afín en toda la ventana. Para (b),
+\[
+ f(x+h)-f(x-h)=s^-(\beta-x+h)+s^+(x+h-\beta),
+\]
+y basta dividir entre $2h$. Si $x=\beta$, la diferencia es
+$(s^-+s^+)/2$ y pertenece al intervalo de Clarke. Si $x$ no es un quiebre,
+$\dC f(x)=\{f'(x)\}$, que en general no contiene esa pendiente media.
+Para (c), se resta la diferencia exacta de la calculada y se aplica
+la desigualdad triangular.
+\end{proof}
+
+\begin{aporte}
+\textbf{Elección del incremento.} El incremento $h$ equilibra la amplificación
+del error de evaluación al dividir entre $2h$ y la mezcla de pendientes cuando
+la ventana atraviesa un quiebre. La distancia desde $x$ al quiebre más próximo
+determina si se produce el segundo efecto.
+
+Aquí $f=\VP-\KA$. Cerca de la raíz puede haber cancelación entre dos cantidades
+grandes; no se supone un error relativo pequeño respecto del residuo $f(x)$.
+La estimación de $\eta_\pm$ debe incorporar las escalas de $\VP$ y de $\KA$,
+además del error aritmético de las operaciones finales. El protocolo utiliza
+$h=1$ peso. Las identidades anteriores no establecen por sí solas una ventana
+universal de incrementos admisibles; su elección se contrasta en las regiones
+y escalas efectivamente estudiadas.
+\end{aporte}
+
+La desventaja de Newton con diferencias finitas está en el costo y no en la exactitud: tres
+llamadas al motor por iteración, frente a una de la secante. Con los órdenes
+clásicos, el índice de Ostrowski es $2^{1/3}\approx1{,}260$ contra $1{,}618$; como
+se advierte después de la \cref{def:ostrowski}, en este problema esos valores no
+se interpretan como eficiencias asintóticas observadas. Lo que el experimento sí
+refleja es el costo por iteración: $\datoEvNFD$ llamadas medias frente a
+$\datoEvSec$ de la secante.
+
+\subsection{Newton con derivada analítica y Newton semisuave}
+
+Disponiendo de la expresión cerrada del \cref{thm:subdiferencial}, la iteración es
+\begin{equation}
+\label{eq:newton-semisuave}
+  x_{k+1} \;=\; x_k - \frac{f(x_k)}{V_k},
+  \qquad V_k\in\dB f(x_k),
+\end{equation}
+tomando $V_k=\VP'_+(x_k)$. Fuera de $\mathcal{B}$ coincide con el método de Newton
+clásico; en un quiebre, es el método de Newton semisuave de Qi--Sun.
+
+\begin{aporte}
+\begin{theorem}[Terminación en un tramo afín y cota bajo convexidad]
+\label{thm:terminacion-finita}
+Sea $f$ continua, lineal a trozos y estrictamente creciente en
+$[\alpha,\beta]$, con raíz $x^*$. En cada iteración, sea $V_k>0$ la pendiente
+de uno de los tramos afines cuya clausura contiene $x_k$, y considérese
+\cref{eq:newton-semisuave}. Entonces:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item Si la clausura del tramo cuya pendiente se selecciona contiene
+        también a $x^*$, entonces $x_{k+1}=x^*$ en aritmética exacta.
+  \item Si además $f$ es convexa y $x_0>x^*$, los iterados anteriores a la
+        terminación satisfacen $x^*\le x_{k+1}<x_k$. En cada paso que no alcanza
+        la raíz se abandona el tramo seleccionado hacia otro situado
+        estrictamente a su izquierda. El método termina en un número de
+        pasos no mayor que el número de tramos cuyas clausuras intersectan
+        $[x^*,x_0]$.
+\end{enumerate}
+La cota del apartado (ii) es una cota superior, no una igualdad.
+\end{theorem}
+\begin{proof}
+En el tramo seleccionado $f(u)=a_ju+b_j$, con $a_j>0$. Por continuidad,
+esta expresión vale en su clausura. Si esta contiene $x^*$, entonces
+$x^*=-b_j/a_j$ y el paso proporciona exactamente ese valor.
+
+Para (ii), mientras $x_k>x^*$ se tiene $f(x_k)>0$ y
+$x_{k+1}=x_k-f(x_k)/V_k<x_k$. Por convexidad, la prolongación afín es una recta
+de soporte: $f(u)\ge f(x_k)+V_k(u-x_k)$. Al evaluar en $u=x^*$ se obtiene
+$x^*\le x_{k+1}$. Si $x_{k+1}$ permaneciera en la clausura del mismo tramo,
+su valor de $f$ sería cero y el método habría terminado. En caso contrario,
+está estrictamente a su izquierda. La finitud de los tramos da la cota.
+\end{proof}
+\end{aporte}
+
+\begin{corollary}[Consecuencia para el problema de cotización]
+\label{cor:un-paso}
+Si el punto inicial $x_0$ y la solución $M^*$ pertenecen ambos al intervalo
+abierto $I=(\rho_{n_{\max}}S_0,5S_0)$ del \cref{cor:region-afin}, el método
+\cref{eq:newton-semisuave}, con la pendiente exacta de ese tramo, alcanza
+$M^*$ en una sola iteración en aritmética exacta. Se requieren dos
+evaluaciones de $f$ para calcular y comprobar el paso. El costo de obtener
+la derivada debe incluirse en la contabilidad del motor.
+\end{corollary}
+
+El \cref{tab:terminacion} verifica el \cref{cor:un-paso} directamente.
+
+\begin{table}[H]
+\centering
+\caption[Verificación de la terminación finita]{Verificación del
+\cref{thm:terminacion-finita} sobre el escenario \texttt{A-R3}, cuya raíz es
+$M^*=\datoMesadaEjemplo$ ($2{,}414$ salarios mínimos, dentro del tramo afín
+$[1{,}15;\,5]\,S_0$). Los arranques interiores verifican la terminación en un
+paso. Los demás describen el comportamiento observado y no establecen una
+igualdad general entre el número de iteraciones y el de tramos atravesados.}
+\label{tab:terminacion}
+\small
+\begin{tabular}{@{}lccc l@{}}
+\toprule
+$x_0/S_0$ & Tramo de $x_0$ & Iteraciones & Evaluaciones & Error final (pesos) \\
+\midrule
+$1{,}30$ & mismo que $M^*$ & $1$ & $2$ & $0$ \\
+$2{,}00$ & mismo que $M^*$ & $1$ & $2$ & $0$ \\
+$3{,}00$ & mismo que $M^*$ & $1$ & $2$ & $9{,}3\cdot10^{-10}$ \\
+$4{,}50$ & mismo que $M^*$ & $1$ & $2$ & $1{,}9\cdot10^{-9}$ \\
+$4{,}90$ & mismo que $M^*$ & $1$ & $2$ & $0$ \\
+\midrule
+$6{,}00$ & cruza racimo II & $2$ & $3$ & $9{,}3\cdot10^{-10}$ \\
+$8{,}00$ & cruza racimo II & $2$ & $3$ & $0$ \\
+$13{,}00$& cruza racimos II--III & $2$ & $3$ & $0$ \\
+$20{,}00$& cruza racimos II--III & $2$ & $3$ & $0$ \\
+$24{,}00$& cruza racimos II--III & $2$ & $3$ & $9{,}3\cdot10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El error residual de $9{,}3\cdot10^{-10}$ pesos es del orden de unas pocas unidades
+en el último lugar (\emph{ulp}) de la representación de punto flotante de doble precisión
+de un número del orden de $4\cdot10^6$: la solución alcanza el límite de la
+aritmética disponible.
+
+\subsection{Newton salvaguardado}
+
+\begin{algorithm}[H]
+\caption{Newton semisuave con salvaguarda de encaje}
+\label{alg:newton-salvaguardado}
+\SetAlgoLined
+\KwIn{$f$, subgradiente $V(\cdot)$, $[a,b]$ con $f(a)f(b)<0$}
+evaluar los extremos y devolver uno si satisface el criterio del residuo\;
+$x\leftarrow(a+b)/2$, $c\leftarrow0$\;
+\While{no se haya certificado la solución}{
+  evaluar $f(x)$\;
+  \If{$f(x)=0$ \KwSty{o} $|f(x)|<\varepsilon_f$}{devolver $x$\;}
+  actualizar $[a,b]$ con $x$, conservando el cambio de signo\;
+  \If{$(b-a)/2\le\varepsilon_x$}{
+     evaluar y devolver $(a+b)/2$\;
+  }
+  \eIf{$c=2$}{
+     $x\leftarrow(a+b)/2$, $c\leftarrow0$ \tcp*{bisección periódica}
+  }{
+     $v\leftarrow V(x)$\;
+     \eIf{$v=0$ \KwSty{o} $x-f(x)/v\notin(a,b)$}{
+        $x\leftarrow(a+b)/2$, $c\leftarrow0$\;
+     }{
+        $x\leftarrow x-f(x)/v$, $c\leftarrow c+1$\;
+     }
+  }
+}
+\end{algorithm}
+
+\begin{theorem}[Convergencia global y terminación finita]
+\label{thm:salvaguardado}
+Sea $f$ continua y estrictamente creciente en el intervalo inicial
+$[a_0,b_0]$, con $f(a_0)<0<f(b_0)$. El
+\cref{alg:newton-salvaguardado} conserva el encaje y converge a su raíz única
+$M^*$. Cada bloque de tres propuestas que no termina contiene al menos una
+bisección; por tanto, después de evaluar e incorporar al encaje $k$
+propuestas posteriores a la evaluación inicial, el ancho está acotado por
+\[
+  b_k-a_k\le (b_0-a_0)\,2^{-\lfloor k/3\rfloor}.
+\]
+La terminación por ancho devuelve un punto con error no mayor que
+$(b_k-a_k)/2$. Esta cota de trabajo no es la cota por iteración de la
+bisección pura.
+
+Si además $f$ es lineal a trozos con finitos quiebres y el subgradiente
+seleccionado es una pendiente lateral positiva en un entorno de $M^*$,
+la iteración ideal, continuada hasta $f(x)=0$, alcanza la raíz en un
+número finito de pasos en aritmética exacta. Con tolerancias positivas
+puede detenerse antes mediante los certificados de \cref{eq:parada}.
+En particular, un paso de Newton aceptado cuya pendiente corresponde a un
+tramo cuya clausura contiene $M^*$ alcanza la raíz exactamente.
+\end{theorem}
+\begin{proof}
+Cada evaluación que no termina reemplaza un extremo por un punto interior,
+sin perder el cambio de signo. El contador permite a lo sumo dos propuestas
+consecutivas de Newton antes de imponer un punto medio; un candidato inválido
+también produce bisección. Cada una de estas reduce el ancho a la mitad y
+los demás pasos no lo aumentan, lo que da la cota indicada. Los intervalos
+encajados convergen a un punto y, por continuidad y cambio de signo, ese
+punto es $M^*$. La cota del punto medio es geométrica.
+
+Para la última afirmación, elíjase un entorno de $M^*$ sin otros quiebres.
+Una vez que el encaje y el punto de evaluación están en ese entorno, cada
+tramo lateral pertinente contiene la raíz en su clausura. La propuesta de
+Newton es entonces exactamente $M^*$ por el
+\cref{thm:terminacion-finita}(i), y pertenece al interior del encaje mientras
+no se haya alcanzado la raíz. Si el contador obliga primero a una bisección,
+la siguiente propuesta válida de Newton obtiene el mismo resultado. Esto
+ocurre después de un número finito de pasos por la contracción del encaje.
+\end{proof}
+
+La bisección periódica permite recomendar este esquema por una garantía de
+progreso explícita. Su costo efectivo se contrasta con el de las otras
+alternativas en el \cref{cap:resultados}; la prueba no establece que sea el
+único método del catálogo con garantía global.
+
+\subsection{Los demás métodos abiertos}
+
+\paragraph{Steffensen.}
+$x_{k+1}=x_k-f(x_k)^2/\bigl(f(x_k+f(x_k))-f(x_k)\bigr)$. Alcanza orden $2$ sin
+derivadas usando el propio valor de $f$ como incremento.
+
+\begin{criticism}[Un fracaso instructivo]
+\label{crit:steffensen}
+Steffensen falla en el $100\%$ de los escenarios de este trabajo. La causa es
+puramente dimensional: $f$ se mide en pesos de capital, con magnitud
+$\sim10^8$, mientras que $x$ se mide en pesos de mesada, con magnitud
+$\sim10^6$. El incremento auxiliar $x_k+f(x_k)$ resulta ser unas cien veces mayor
+que la propia incógnita, sale del dominio admisible, es recortado al extremo
+superior, y la diferencia del denominador se anula. El método no es «malo»: está
+mal escalado. La variante \emph{escalada}, que usa $x_k+f(x_k)/L$ con
+$L\approx\VP'$, converge en $\datoEvSteE$ evaluaciones. La lección es que el orden
+de convergencia es invariante bajo cambio de unidades, pero la \emph{convergencia}
+no lo es.
+\end{criticism}
+
+\paragraph{Müller.}
+Interpola una parábola por los tres últimos puntos; orden $1{,}839$, la raíz real
+de $t^3=t^2+t+1$ \citep{muller1956}.\footnote{El valor es $p\approx1{,}83929$, la llamada constante \emph{tribonacci}, que generaliza la razón áurea de la secante del mismo modo que Müller generaliza la interpolación lineal a la cuadrática. La sucesión de órdenes de los métodos de interpolación de grado creciente tiende a $2$ por abajo.} Sobre este problema pierde su ventaja: como
+$f$ es afín en cada tramo, el coeficiente cuadrático de la parábola es
+\emph{nulo} dentro de un mismo tramo y Müller degenera exactamente en la secante;
+el término cuadrático solo se activa cuando los tres puntos abarcan un quiebre, es
+decir, precisamente donde una parábola no describe bien a la función.
+
+\paragraph{Halley.}
+$x_{k+1}=x_k-2ff'/(2f'^2-ff'')$, de orden cúbico. Es el contraejemplo más nítido
+del capítulo:
+
+\begin{criticism}[El orden nominal alto no garantiza menor costo]
+\label{crit:halley}
+Halley es el método de mayor orden teórico del catálogo ($p=3$) y uno de los peores
+en la práctica ($\datoEvHal$ evaluaciones, frente a $\datoEvNAN$ de Newton
+analítico). La razón es estructural: el orden $3$ presupone $f\in C^3$ y explota la
+información de $f''$\footnote{Halley publicó el método en 1694 como una mejora del de Newton, y su deducción original --- por aproximación mediante una hipérbola en lugar de una recta --- presupone explícitamente curvatura no nula. Sobre una función afín a trozos la hipérbola degenera en la recta, y con ella toda la ventaja del método.}. Pero aquí $f''\equiv0$ en casi todo punto, de modo que la
+fórmula de Halley colapsa idénticamente en la de Newton --- sin ganancia alguna,
+pero pagando tres evaluaciones por paso en lugar de una --- y en los quiebres la
+segunda derivada numérica se comporta como $O(1/h)$ y desestabiliza el paso. Es la
+ilustración más clara de la tesis metodológica de este trabajo: \emph{la elección
+del método debe guiarse por la estructura del problema, no por el orden nominal}.
+\end{criticism}
+
+\paragraph{Punto fijo relajado.}
+$x_{k+1}=x_k+\lambda f(x_k)$, con $\lambda<0$. Por el teorema de la aplicación
+contractiva converge si $|1+\lambda f'|<1$, y el valor óptimo $\lambda=-1/f'$
+reproduce exactamente Newton. En este problema $f'\approx\datoPendienteAfin$ es
+prácticamente constante en todo el rango comercial, de modo que la elección
+$\lambda=-1/\datoPendienteAfin$ es casi óptima \emph{globalmente} y el método de
+orden $1$ rinde como uno de orden $2$: $\datoEvPF$ evaluaciones. Es un caso
+notable en que la estructura afín permite «congelar» la derivada sin penalización.
+
+\paragraph{Aitken--Steffensen.}
+Acelera el punto fijo con el proceso $\Delta^2$ de Aitken. Convierte la
+convergencia lineal en cuadrática al precio de dos evaluaciones por paso.
+
+\section{Síntesis del capítulo}
+
+El \cref{tab:prediccion} resume qué predice la teoría genérica y qué predice el
+análisis estructural del \cref{cap:estructura} para cada método. El
+\cref{cap:resultados} contrasta ambas columnas con el experimento.
+
+\begin{table}[H]
+\centering
+\caption[Predicciones teóricas]{Lo que predice la teoría genérica frente a lo que
+predice la estructura afín a trozos.}
+\label{tab:prediccion}
+\small
+\begin{tabular}{@{}p{3.4cm}p{4.6cm}p{6.2cm}@{}}
+\toprule
+\textbf{Método} & \textbf{Teoría genérica} & \textbf{Predicción estructural} \\
+\midrule
+Bisección & lineal, razón $1/2$ & sin cambio: la cota no usa suavidad \\
+Regula falsi & lineal & puede conservar un extremo; exacta si la cuerda queda en el tramo de la raíz \\
+Secante & orden $\varphi$ & exacta con dos puntos en el tramo de la raíz (\cref{prop:secante-afin}) \\
+Newton dif.\ fin. & orden $2$ & pendiente exacta si la ventana no cruza un quiebre; costo $3\times$ \\
+Newton analítico & orden $2$ & un paso dentro del tramo de la raíz (\cref{cor:un-paso}) \\
+Steffensen & orden $2$ & falla por escala (\cref{crit:steffensen}) \\
+Müller & orden $1{,}839$ & degenera en secante \\
+Halley & orden $3$ & degenera en Newton con triple costo \\
+Punto fijo & lineal & casi óptimo por $f'$ constante \\
+Newton semisuave & superlineal & terminación local exacta; alcance según el \cref{thm:terminacion-finita} \\
+\bottomrule
+\end{tabular}
+\end{table}
