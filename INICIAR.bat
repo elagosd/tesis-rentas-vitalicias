@@ -127,7 +127,7 @@ echo   Para cerrarla: cierre la ventana negra que aparecera,
 echo   o pulse Ctrl+C dentro de ella.
 echo  ------------------------------------------------------------
 echo.
-start "Presentacion de la tesis" /D "%RAIZ%app" cmd /k "%PY%" -m streamlit run presentacion.py --server.headless true --browser.gatherUsageStats false
+start "Presentacion de la tesis" /D "%RAIZ%app" cmd /s /k ""%PY%" -m streamlit run presentacion.py --server.headless true --browser.gatherUsageStats false"
 timeout /t 12 /nobreak >nul
 start "" "http://localhost:8501"
 goto MENU
@@ -151,7 +151,7 @@ echo   Iniciando el cotizador...
 echo   Se abrira en:   http://localhost:8502
 echo  ------------------------------------------------------------
 echo.
-start "Cotizador" /D "%RAIZ%py\cotizador" cmd /k "%PY%" -m streamlit run app.py --server.port 8502 --server.headless true --browser.gatherUsageStats false
+start "Cotizador" /D "%RAIZ%py\cotizador" cmd /s /k ""%PY%" -m streamlit run app.py --server.port 8502 --server.headless true --browser.gatherUsageStats false"
 timeout /t 12 /nobreak >nul
 start "" "http://localhost:8502"
 goto MENU
@@ -402,7 +402,7 @@ echo   Python del sistema:
 if defined PYSIS (%PYSIS% --version) else (echo     [!] NO ENCONTRADO)
 echo.
 echo   Entorno virtual:
-if exist "%PY%" (echo     OK    %PY%) else (echo     [!] NO EXISTE)
+if exist "%PY%" (echo     OK    "%PY%") else (echo     [!] NO EXISTE)
 if exist "%VENV%\.dependencias_ok" (echo     OK    dependencias verificadas) else (echo     [!] dependencias SIN verificar)
 echo.
 echo   Paquetes:
