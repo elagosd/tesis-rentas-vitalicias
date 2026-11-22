@@ -86,7 +86,7 @@ def biseccion(
             f_minima = f_mid
 
     tiempo_total = time.perf_counter() - tiempo_inicio
-    mensaje = "" if convergio else "No convergio dentro de la tolerancia o iteraciones permitidas"
+    mensaje = "" if convergio else "No convergió dentro de la tolerancia o de las iteraciones permitidas"
 
     return ResultadoMetodoNumerico(
         nombre_metodo="Biseccion",
@@ -146,7 +146,7 @@ def newton(
         derivada = (f(_acotar(x + h)) - f(_acotar(x - h))) / (2 * h)
 
         if derivada == 0:
-            mensaje = "La derivada numerica se anulo, no se puede continuar"
+            mensaje = "La derivada numérica se anuló; no se puede continuar"
             break
 
         x_siguiente = _acotar(x - f_x / derivada)
@@ -155,7 +155,7 @@ def newton(
         historial.append(IteracionMetodo(iteracion, x, f_x))
 
     if convergio is False and mensaje == "":
-        mensaje = "No convergio dentro de la tolerancia o iteraciones permitidas"
+        mensaje = "No convergió dentro de la tolerancia o de las iteraciones permitidas"
 
     tiempo_total = time.perf_counter() - tiempo_inicio
 
@@ -216,7 +216,7 @@ def secante(
 
         diferencia_f = f_actual - f_anterior
         if diferencia_f == 0:
-            mensaje = "La diferencia entre evaluaciones se anulo, no se puede continuar"
+            mensaje = "La diferencia entre evaluaciones se anuló; no se puede continuar"
             break
 
         # Formula de la secante: aproxima la pendiente con los dos ultimos puntos
@@ -228,7 +228,7 @@ def secante(
         historial.append(IteracionMetodo(iteracion, x_actual, f_actual))
 
     if convergio is False and mensaje == "":
-        mensaje = "No convergio dentro de la tolerancia o iteraciones permitidas"
+        mensaje = "No convergió dentro de la tolerancia o de las iteraciones permitidas"
 
     tiempo_total = time.perf_counter() - tiempo_inicio
 

@@ -61,6 +61,18 @@ def sci(x: float, d: int = 1) -> str:
     return f"{mant.replace('.', ',')}·10{str(exp).translate(_SUP)}"
 
 
+def sci_html(x: float, d: int = 1) -> str:
+    """Como sci(), con el exponente en <sup>: las cifras grandes usan una fuente
+    serif que no trae todos los superíndices Unicode."""
+    if x == 0 or not np.isfinite(x):
+        return "0" if x == 0 else "—"
+    mant, exp = f"{x:.{d}e}".split("e")
+    exp = int(exp)
+    if exp == 0:
+        return mant.replace(".", ",")
+    return f"{mant.replace('.', ',')}·10<sup>{str(exp).replace('-', '−')}</sup>"
+
+
 N_ANIOS_MAX = 110      # años de vigencia máxima: número de factores de deslizamiento
 
 
@@ -211,16 +223,16 @@ elif seccion == SECCIONES[1]:
         "obligaciones incluidas; la igualdad no identifica por sí sola esa reserva con una "
         "prima comercial completa.")
 
+    n_meses = C("NMeses", "1439")
+    n_meses_txt = dec(float(n_meses), 0) if n_meses.isdigit() else n_meses
+    corte = C("VigenciaCorte", "1321")
+    corte_txt = dec(float(corte), 0) if corte.isdigit() else corte
+
     c1, c2 = st.columns([1.05, 1])
     with c1:
         st.latex(r"\text{hallar } M^*\ge S_0:\qquad f(M^*)\;=\;VP(M^*)\;-\;KA\;=\;0")
         st.markdown("donde la reserva matemática es")
         st.latex(r"VP(M)=\frac{(1+\gamma)\,RAB(M)+AUF(M)}{1-g}")
-        st.latex(r"""RAB(M)=\sum_{t=1}^{1439}
-        \underbrace{\max\{M\tau_t,\,S_t\}}_{\text{mesada con piso legal}}\;
-        \underbrace{\nu_t\,\kappa_t}_{\text{vigencia y pagos}}\;
-        \underbrace{CONAB(t{+}1)}_{\text{supervivencia}}\;
-        \underbrace{v_{t+1}}_{\text{descuento}}""")
         st.markdown("""
 La función combina supervivencias tabuladas, indexación, un piso pensional
 expresado con un máximo y un auxilio funerario acotado entre 5 y 10 salarios
@@ -235,13 +247,21 @@ justifica estudiar los métodos iterativos que resuelven la ecuación.
                       "La cotización repetida y la proyección anual del retiro programado "
                       "resuelven muchos problemas de raíz. Cada llamada al motor construye "
                       "flujos y probabilidades del grupo familiar y los descuenta sobre "
-                      f"1.439 meses: en este equipo, unos "
+                      f"{n_meses_txt} meses: en este equipo, unos "
                       f"<b>{dec(ms, 1)} ms</b>. Ese trabajo domina las operaciones escalares "
                       "del método; por eso el costo se mide en <b>llamadas efectivas al "
                       "motor</b>, no en iteraciones.")
-        estilo.cifras([("1.439", "meses proyectados"),
+        estilo.cifras([(n_meses_txt, "meses proyectados"),
                        (f"≈ {dec(ms, 1)} ms", "por llamada al motor<br>en este equipo", "naranja"),
-                       ("≈110", "años hasta el corte<br>de vigencia (mes 1.321)")])
+                       (f"≈ {C('AniosVigencia', '110,1')}",
+                        f"años hasta el corte<br>de vigencia (mes {corte_txt})")])
+
+    st.markdown("con el valor presente actuarial del amparo básico")
+    st.latex(r"RAB(M)=\sum_{t=1}^{%s}" % n_meses + r"""
+    \underbrace{\max\{M\tau_t,\,S_t\}}_{\text{mesada con piso legal}}\;
+    \underbrace{\nu_t\,\kappa_t}_{\text{vigencia y pagos}}\;
+    \underbrace{CONAB(t{+}1)}_{\text{supervivencia}}\;
+    \underbrace{v_{t+1}}_{\text{descuento}}""")
 
     st.markdown("## El grupo asegurado y su supervivencia")
     st.markdown("La renta se paga mientras **al menos uno** de los integrantes conserve "
@@ -314,9 +334,11 @@ elif seccion == SECCIONES[2]:
                            P.ipc_objetivo_largo_plazo * 100, 0.25, format="%.2f")
         tasa = st.slider("Interés técnico real (%)", 1.0, 8.0, 4.20, 0.10)
         st.markdown("### Ventana")
-        rango = st.select_slider("Rango en múltiplos del SMLV",
-                                 options=["0 – 15", "0,8 – 1,4", "4,8 – 6,0", "9,8 – 11,4"],
-                                 value="0 – 15")
+        rango = st.radio("Rango en múltiplos del SMLV",
+                         options=["0 – 15", "0,8 – 1,4", "4,8 – 6,0", "9,8 – 11,4"],
+                         index=0, horizontal=True,
+                         help="Las tres últimas ventanas acercan la vista a cada racimo "
+                              "de quiebres.")
         con_hijo = st.checkbox("Añadir un hijo menor", value=False)
 
     lims = {"0 – 15": (0.02, 15.0), "0,8 – 1,4": (0.80, 1.40),
@@ -593,7 +615,7 @@ elif seccion == SECCIONES[4]:
     else:
         estilo.bloque("M está en un tramo afín",
                       f"Cada peso adicional de mesada mensual cuesta <b>{dec(v['der'], 2)}</b> "
-                      f"pesos de capital. Hay {v['renta']} periodos de renta y {v['auf']} del "
+                      f"pesos de capital. Hay {dec(v['renta'], 0)} periodos de renta y {dec(v['auf'], 0)} del "
                       "auxilio funerario activos. El condicionamiento relativo "
                       f"κ = VP/(M·VP′) = {dec(v['VP'] / (M * v['der']), 4)}: un error relativo "
                       "en el capital pasa a la mesada casi sin amplificarse. Ese buen "
@@ -626,7 +648,7 @@ elif seccion == SECCIONES[4]:
             vp_nuevo = N.valor_y_derivadas(d, P, clave, M + paso)["VP"]
             residuo = vp_nuevo - (v["VP"] + dKA * 1e6)
             estilo.cifras([(N.pesos(paso), "ΔM = ΔKA / VP′₊(M)"),
-                           (sci(abs(residuo)), "residuo tras un paso<br>(pesos de capital)",
+                           (sci_html(abs(residuo)), "residuo tras un paso<br>(pesos de capital)",
                             "verde" if abs(residuo) < 1e-2 else "rojo")])
             st.caption("Si M y M+ΔM caen en el mismo tramo afín, un único paso de Newton da la "
                        "raíz en aritmética exacta: el residuo es redondeo de máquina. Si el paso "
@@ -681,7 +703,7 @@ elif seccion == SECCIONES[5]:
          "verde" if r.convergio else "rojo"),
         (f"{r.iteraciones}", "iteraciones"),
         (f"{r.evaluaciones_funcion}", "llamadas al motor", "naranja"),
-        (sci(abs(r.raiz - objetivo_smlv * S)), "error final (pesos)"),
+        (sci_html(abs(r.raiz - objetivo_smlv * S)), "error final (pesos)"),
         (f"{N.ORDEN_NOMINAL[metodo]:g}".replace(".", ","), "orden nominal"),
     ])
     if r.convergio and r.estado:
@@ -705,8 +727,10 @@ elif seccion == SECCIONES[5]:
 
     izq, der = st.columns([1.5, 1])
     with izq:
-        lo = max(1.0, objetivo_smlv * 0.45)
-        hi = min(25.0, objetivo_smlv * 2.6)
+        h = r.historial[:14]
+        xs_it = [it.x / S for it in h if np.isfinite(it.x) and 0 < it.x / S <= 25.0]
+        lo = max(1.0, min([objetivo_smlv * 0.45] + xs_it))
+        hi = min(25.0, max([objetivo_smlv * 2.6] + xs_it) * 1.03)
         dfc = N.curva_vp(d, P, clave, lo * S, hi * S, 200)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=dfc.M / S, y=dfc.VP - capital,
@@ -714,7 +738,6 @@ elif seccion == SECCIONES[5]:
                                  hoverinfo="skip"))
         fig.add_hline(y=0, line=dict(color="#444", width=1))
         fig.add_vline(x=objetivo_smlv, line=dict(color=N.ROJO, width=1, dash="dot"))
-        h = r.historial[:14]
         fig.add_trace(go.Scatter(
             x=[it.x / S for it in h], y=[it.fx for it in h],
             mode="lines+markers+text",
@@ -724,7 +747,7 @@ elif seccion == SECCIONES[5]:
             marker=dict(size=8), name="iterados",
             hovertemplate="%{text}<br>M = %{x:.4f} SMLV<extra></extra>"))
         fig.update_layout(**N.plantilla_plotly(), height=420,
-                          xaxis_title="M / SMLV", yaxis_title="f(M)",
+                          xaxis_title="M / SMLV", yaxis_title="f(M)  [pesos]",
                           title=f"{metodo} — trayectoria de los iterados")
         estilo.grafica(fig)
 
@@ -882,17 +905,26 @@ elif seccion == SECCIONES[6]:
                 unsafe_allow_html=True)
     tg = N.tabla_tesis("tabla_global")
     if tg is not None:
-        estilo.tabla(tg)
+        col_exito = next((c for c in tg.columns if c.startswith("Éxito")), None)
+
+        def _resaltar_fallos(fila):
+            fallo = col_exito is not None and fila[col_exito].strip().startswith("0")
+            return ["color: #D55E00; background-color: #FFF4EC" if fallo else ""] * len(fila)
+
+        # Altura suficiente para ver las 19 filas sin barra de desplazamiento.
+        estilo.tabla(tg.style.apply(_resaltar_fallos, axis=1),
+                     height=(len(tg) + 1) * 35 + 3)
         st.caption("Tabla de resultados globales de la tesis (tex/tablas/tabla_global.tex), "
                    "ordenada por llamadas al motor. «Éxito»: cumplimiento del criterio "
                    "certificado; «Ev.»: llamadas al motor, incluidos valor, derivadas y "
                    "preparación; error: mediana de las diferencias absolutas de mesada respecto "
                    "de la referencia. El costo de una ejecución fallida no representa el de una "
-                   "solución.")
+                   "solución: por eso Steffensen, que encabeza la tabla con 0 % de éxito, va "
+                   "resaltado.")
         tr = N.tabla_tesis("tabla_region")
         if tr is not None:
             st.markdown("#### Llamadas medias por región de la raíz (escenarios sintéticos)")
-            estilo.tabla(tr)
+            estilo.tabla(tr, height=(len(tr) + 1) * 35 + 3)
             st.caption("Tabla de costo por región estructural de la tesis "
                        "(tex/tablas/tabla_region.tex).")
     else:
@@ -1231,8 +1263,8 @@ elif seccion == SECCIONES[9]:
     eps_x, eps_f = Delta / H_x, Delta / H_f
     estilo.cifras([
         (dec(H_x, 0), "H<sub>N</sub><sup>x</sup>"),
-        (sci(eps_x, 2), "tolerancia de mesada ε<sub>x</sub><br>(pesos)", "naranja"),
-        (sci(eps_f, 2), "tolerancia de residuo ε<sub>f</sub><br>(pesos de capital)",
+        (sci_html(eps_x, 2), "tolerancia de mesada ε<sub>x</sub><br>(pesos)", "naranja"),
+        (sci_html(eps_f, 2), "tolerancia de residuo ε<sub>f</sub><br>(pesos de capital)",
          "verde" if eps_f >= P.epsilon else "rojo"),
     ])
     estilo.bloque(
@@ -1246,15 +1278,17 @@ elif seccion == SECCIONES[9]:
         "ajustes de la mesada anterior. Por eso R4 consiste en calibrarla y verificarla para "
         "la configuración concreta de la proyección.", "critica")
 
-    st.markdown("### Trayectorias comparadas sobre una póliza real")
+    st.markdown("### Trayectorias comparadas sobre una póliza "
+                + ("real" if N.BASE_ES_REAL else "de la base de ejemplo"))
     base7 = N.base_real()
     if base7 is None:
-        st.info("No se encontró la base de pólizas reales (py/cotizador/ejemplos/).")
+        st.info("No se encontró la base de pólizas (ni datos_privados/ ni py/cotizador/ejemplos/).")
     else:
         val = N.validacion_real()
         cpol, csem = st.columns([1, 1])
         with cpol:
-            idx = st.selectbox("Póliza real", list(range(len(val))), index=0,
+            idx = st.selectbox("Póliza real" if N.BASE_ES_REAL else "Póliza (base ficticia)",
+                               list(range(len(val))), index=0,
                                format_func=lambda i: f"{val.poliza.iloc[i]} · mesada RV "
                                                      f"{dec(val.mesada_smlv.iloc[i])} SMLV")
         with csem:
@@ -1500,7 +1534,7 @@ elif seccion == SECCIONES[10]:
                 "**estructura** de VP o solo su nivel. Elija una hipótesis y compare la "
                 "pendiente normalizada en el racimo del salario mínimo.")
     opciones = {
-        f"Interés técnico real: 4,20 % → 3,20 %": ("tasa", 0.032),
+        "Interés técnico real: 4,20 % → 3,20 %": ("tasa", 0.032),
         f"Recargo de gastos: {dec(P.porcentaje_recargo_gastos_reserva * 100, 1)} % → 8,0 %":
             ("porcentaje_recargo_gastos_reserva", 0.08),
         f"Reserva por cambio de grupo: {dec(P.porcentaje_reserva_cambio_grupo * 100, 1)} % → 1,5 %":
@@ -1584,9 +1618,37 @@ elif seccion == SECCIONES[10]:
                       "critica")
 
     st.markdown("### Contraste con cotizaciones de referencia")
-    val = N.validacion_real()
+    lectura_comun = (
+        "La causa <b>no está identificada</b> con la información disponible: deben "
+        "conciliarse fechas, capitales, tablas, tasas, gastos y convenciones de pago, y la "
+        "diferencia no se atribuye a un factor omitido sin evidencia adicional. El contraste "
+        "evalúa concordancia de resultados, no valida por separado los parámetros, y su "
+        "aceptación requiere fijar una tolerancia de materialidad.")
+
+    def pct_signo(v: float) -> str:
+        return f"+{dec(v)} %" if v >= 0 else f"−{dec(-v)} %"
+
+    val = N.validacion_real() if N.BASE_ES_REAL else None
     if val is None:
-        st.info("No se encontró la base de pólizas reales (py/cotizador/ejemplos/).")
+        # Sin la base real no hay contraste que calcular: la base ficticia del
+        # repositorio reproduce el modelo por construcción. Se citan las cifras
+        # del documento (sección 6, figura del contraste).
+        estilo.cifras([
+            (f"+{C('ValidMedia', '1,36')} %", "discrepancia media", "naranja"),
+            (f"{C('ValidMin', '0,51')} – {C('ValidMax', '2,88')} %", "rango"),
+            (f"{C('MultMin', '1,43')} – {C('MultMax', '2,28')}",
+             "mesadas de las muestras<br>reales, en SMLV", "verde"),
+        ])
+        estilo.bloque(
+            "Lectura",
+            "En las siete pólizas de referencia las mesadas calculadas son mayores que las "
+            "reportadas por la compañía. " + lectura_comun
+            + " Todas las mesadas caen dentro del tramo afín.")
+        estilo.nota("Cifras del capítulo 6 del documento. Las cotizaciones reales contienen "
+                    "datos personales y no se publican; la base ficticia del repositorio "
+                    "reproduce el modelo por construcción, así que no sirve para este contraste. "
+                    "Con las bases reales en <code>datos_privados/</code>, esta sección lo "
+                    "recalcula póliza a póliza.")
     else:
         c1, c2 = st.columns(2)
         with c1:
@@ -1612,34 +1674,37 @@ elif seccion == SECCIONES[10]:
             fig = go.Figure(go.Bar(
                 x=val.poliza, y=val.dif_pct,
                 marker_color=[N.VERDE if abs(v) < 3 else N.NARANJA for v in val.dif_pct],
-                text=[f"+{dec(v)} %" if v >= 0 else f"−{dec(-v)} %" for v in val.dif_pct],
+                text=[pct_signo(v) for v in val.dif_pct],
                 textposition="outside", cliponaxis=False,
                 hovertemplate="%{x}<br>%{y:+.2f} %<extra></extra>"))
             fig.add_hline(y=0, line=dict(color="#444", width=1))
             fig.update_layout(**N.plantilla_plotly(), height=360,
                               yaxis_title="diferencia relativa [%]",
                               yaxis=dict(range=[min(0, val.dif_pct.min() * 1.3),
-                                                val.dif_pct.max() * 1.25]),
+                                                max(0, val.dif_pct.max() * 1.25)]),
                               title="(b) Discrepancia póliza a póliza")
             estilo.grafica(fig)
         estilo.cifras([
-            (f"+{dec(val.dif_pct.mean())} %", "discrepancia media", "naranja"),
-            (f"{dec(val.dif_pct.abs().min())} – {dec(val.dif_pct.abs().max())} %", "rango"),
+            (pct_signo(val.dif_pct.mean()), "discrepancia media", "naranja"),
+            (f"{dec(val.dif_pct.abs().min())} – {dec(val.dif_pct.abs().max())} %",
+             "rango (en valor absoluto)"),
             (f"{dec(val.mesada_smlv.min())} – {dec(val.mesada_smlv.max())}",
              "mesadas, en SMLV", "verde"),
         ])
+        n_pol = len(val)
+        if (val.dif_pct > 0).all():
+            signo = "las mesadas calculadas son mayores que las de referencia"
+        elif (val.dif_pct < 0).all():
+            signo = "las mesadas calculadas son menores que las de referencia"
+        else:
+            signo = "las diferencias cambian de signo entre pólizas"
         estilo.bloque(
             "Lectura",
-            "En estas siete pólizas las mesadas calculadas son mayores que las de referencia. La "
-            "causa <b>no está identificada</b> con la información disponible: deben conciliarse "
-            "fechas, capitales, tablas, tasas, gastos y convenciones de pago, y la diferencia no "
-            "se atribuye a un factor omitido sin evidencia adicional. El contraste evalúa "
-            "concordancia de resultados, no valida por separado los parámetros, y su aceptación "
-            "requiere fijar una tolerancia de materialidad. "
+            f"En estas {n_pol} pólizas {signo}. " + lectura_comun + " "
             + ("Todas las mesadas caen dentro del tramo afín."
                if val.mesada_smlv.min() > ANCHO and val.mesada_smlv.max() < 5.0 else ""))
-        estilo.nota("Las pólizas se identifican como P1…P7. La base original contiene nombres y "
-                    "números de identificación, que la aplicación no muestra.")
+        estilo.nota(f"Las pólizas se identifican como P1…P{n_pol}. La base original contiene "
+                    "nombres y números de identificación, que la aplicación no muestra.")
 
     estilo.bloque(
         "Síntesis",

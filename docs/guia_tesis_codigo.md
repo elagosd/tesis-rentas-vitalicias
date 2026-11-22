@@ -239,4 +239,6 @@ git checkout -- tex
 | 11. Del teorema a producción | 8 (tabla 8.3, correcciones y recomendaciones) |
 | 12. Conclusiones y trabajo futuro | 9 |
 
+Las cifras consolidadas que cita (tablas del banco de pruebas y macros numéricas) se leen de `tex/`. Con las bases ficticias, el contraste con cotizaciones de referencia de la sección 10 muestra las cifras del capítulo 6, porque esas bases reproducen el modelo por construcción; con las bases reales en `datos_privados/` lo recalcula póliza a póliza. La sección 9 rotula la póliza según la base que esté en uso.
+
 **Cotizador** (`py/cotizador/app.py`). Es la herramienta sobre la que se construyó el motor: cotiza una póliza o una base completa, calcula la tasa equivalente y proyecta el retiro programado. Su funcionamiento se describe en `py/cotizador/README.md`.

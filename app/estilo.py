@@ -82,6 +82,7 @@ h3 { font-weight:600 !important; font-size:1.22rem !important; }
   border-left:3px solid var(--azul); border-radius:3px; padding:.85rem 1rem; }
 .cifra .v { font-family:'Crimson Pro',serif; font-size:2.0rem; font-weight:700;
   color:var(--tinta); line-height:1.05; }
+.cifra .v sup { font-size:.55em; vertical-align:super; line-height:0; }
 .cifra .e { font-size:.73rem; text-transform:uppercase; letter-spacing:.09em;
   color:var(--gris); margin-top:.3rem; }
 .cifra.naranja { border-left-color:var(--naranja); }

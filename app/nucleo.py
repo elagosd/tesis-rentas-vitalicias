@@ -51,6 +51,10 @@ RUTA_TEX = _RAIZ / "tex"
 _BASE_PRIVADA = _RAIZ / "datos_privados" / "base_cotizacion_prueba_7_casos.xlsx"
 RUTA_BASE_REAL = (_BASE_PRIVADA if _BASE_PRIVADA.exists()
                   else _RAIZ / "py" / "cotizador" / "ejemplos" / "base_cotizacion_ejemplo.xlsx")
+# True solo si se usa la base real. Con la base ficticia del repositorio las
+# mesadas «de referencia» coinciden con el modelo por construcción, y la
+# presentación cita entonces el contraste del documento (capítulo 6).
+BASE_ES_REAL = _BASE_PRIVADA.exists()
 
 # Semilla explícita del escenario de mercado de retiro programado. Sin ella el
 # motor deriva una semilla estable de un resumen SHA-256 de las entradas; aquí
